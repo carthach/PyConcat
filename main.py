@@ -23,13 +23,13 @@ def closestUnit(targetFeature, corpusFeatures, sequence):
                 currentTargetCost = distance.euclidean(targetFeature, corpusFrame["vector"])
                 currentCost = currentTargetCost
 
-                currentConcatCost = 0.0
-                if len(sequence):
-                    lastFileIndex, lastOnsetIndex, lastFrameIndex = sequence[-1]
-                    lastFeatureVector = corpusFeatures[lastFileIndex][lastOnsetIndex]["onsetFeatures"][lastFrameIndex]["vector"]
-                    currentConcatCost = distance.euclidean(corpusFrame["vector"], lastFeatureVector)
-
-                    currentCost = currentCost + currentConcatCost * 0.5
+                # currentConcatCost = 0.0
+                # if len(sequence):
+                #     lastFileIndex, lastOnsetIndex, lastFrameIndex = sequence[-1]
+                #     lastFeatureVector = corpusFeatures[lastFileIndex][lastOnsetIndex]["onsetFeatures"][lastFrameIndex]["vector"]
+                #     currentConcatCost = distance.euclidean(corpusFrame["vector"], lastFeatureVector)
+                #
+                #     currentCost = currentCost + currentConcatCost * 0.5
 
                 if start:
                     totalCost = currentCost
@@ -104,15 +104,16 @@ def main():
     targetFilename = "/Users/carthach/Desktop/debug_audio/python_test/melody9.wav"
     corpusFilenames = extractor.getListOfWavFiles("/Users/carthach/Desktop/debug_audio/python_test/corpus")
 
-    a = extractor.loadAudio(targetFilename)
-    b = extractor.synthResynth(a)
-    extractor.writeAudio(b, "/Users/carthach/Desktop/out.wav")
+    # a = extractor.loadAudio(targetFilename)
+    # b = extractor.synthResynth(a)
+    # extractor.writeAudio(b, "/Users/carthach/Desktop/out.wav")
 
-    #Analyse the file and keep the features but not the audio
-    # targetFeatures = extractor.analyseFile(targetFilename, False)
-    # corpusFeatures = extractor.analyseFiles(corpusFilenames)
-    # sequence = createSequence(targetFeatures, corpusFeatures)
-    # writeSequence(sequence, corpusFilenames)
+    # #Analyse the file and keep the features but not the audio
+    targetFeatures = extractor.analyseFile(targetFilename, False)
+    corpusFeatures = extractor.analyseFiles(corpusFilenames)
+    sequence = createSequence(targetFeatures, corpusFeatures)
+    audio = extractor.resynthesise_audio(sequence, corpusFeatures)
+    extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
 
     # extractor.writeAudio(extractor.resynthesise_audio(sequence, corpusFeatures), "/Users/carthach/Desktop/out.wav")
     print("Done")

@@ -7,17 +7,17 @@ import peakutils
 
 class Extractor:
     #Features
-    loader = None
-    writer = None
-    onsetRate = None
-    slicer = None
-    duration = None
-    mfcc = None
-    fft = None
-    magnitude = None
-    spectrum = None
-    w = None
-    pitch = None
+    # loader = None
+    # writer = None
+    # onsetRate = None
+    # slicer = None
+    # duration = None
+    # mfcc = None
+    # fft = None
+    # magnitude = None
+    # spectrum = None
+    # w = None
+    # pitch = None
 
     frameSize = 2048
     hopSize = 0
@@ -25,17 +25,24 @@ class Extractor:
     def synthResynth(self, audio):
         fft = essentia.standard.FFT()
         ifft = essentia.standard.IFFT()
-        overlapAdd = essentia.standard.OverlapAdd(frameSize = self.frameSize, hopSize = self.hopSize)
+        w = essentia.standard.Windowing(type = 'hann')
 
+        overlapAdd = essentia.standard.OverlapAdd(frameSize = self.frameSize, hopSize = self.hopSize, gain=1.0/self.frameSize)
         audio_out = []
+
+        i = 0
         for fstart in range(0, len(audio) - self.frameSize, self.hopSize):
             frame = audio[fstart:fstart + self.frameSize]
-            fft_frame = fft(self.w(frame))
+            fft_frame = fft(w(frame))
 
             ifft_frame = ifft(fft_frame)
-            # ifft_frame = overlapAdd(ifft_frame)
+            ifft_frame = overlapAdd(ifft_frame)
 
             audio_out = np.append(audio_out, ifft_frame)
+
+            i = i + 1
+
+        print("Number of frames: " + str(i))
 
         return audio_out
 
@@ -47,17 +54,22 @@ class Extractor:
     def resynthesise_audio(self, sequence, features):
         audio = []
         ifft = essentia.standard.IFFT()
-        overlap = essentia.standard.OverlapAdd(frameSize = self.frameSize, hopSize = self.hopSize)
+        overlapAdd = essentia.standard.OverlapAdd(frameSize = self.frameSize, hopSize = self.hopSize, gain=1.0/self.frameSize)
+
+        i = 0
 
         for unit in sequence:
             fileIndex, onsetIndex, frameIndex = unit
 
             clip = ifft(features[fileIndex][onsetIndex]["onsetFeatures"][frameIndex]["fft"])
             # clip = self.w(clip)
-            clip = overlap(clip)
-
+            clip = overlapAdd(clip)
 
             audio = np.append(audio, clip)
+
+            i = i + 1
+
+        print("Number of units: " + str(i))
 
         return audio
 
@@ -101,18 +113,23 @@ class Extractor:
         """
 
         pool = essentia.Pool()
+        mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
+        fft = essentia.standard.FFT()
+        magnitude = essentia.standard.Magnitude()
+        w = essentia.standard.Windowing(type='hann')
+        yin = essentia.standard.PitchYinFFT()
 
         features = []
 
         for fstart in range(0, len(audio) - self.frameSize, self.hopSize):
             frame = audio[fstart:fstart + self.frameSize]
 
-            fft_frame = self.fft(self.w(frame))
-            mag = self.magnitude(fft_frame)
+            fft_frame = fft(w(frame))
+            mag = magnitude(fft_frame)
 
-            pitch, pitchConfidence = self.pitch(mag)
+            pitch, pitchConfidence = yin(mag)
 
-            mfcc_bands, mfcc_coeffs = self.mfcc(mag)
+            mfcc_bands, mfcc_coeffs = mfcc(mag)
 
             frameFeatures = {}
 
@@ -121,9 +138,6 @@ class Extractor:
             frameFeatures["fft"] = fft_frame
 
             features.append(frameFeatures)
-
-        self.pitch.reset()
-        self.mfcc.reset()
 
         # for frame in essentia.standard.FrameGenerator(audio, frameSize=1024, hopSize=512):
         #     mfcc_bands, mfcc_coeffs = self.mfcc(self.spectrum(self.w(frame)))
@@ -137,10 +151,10 @@ class Extractor:
         audio = None
 
         if fileName:
-            self.loader.configure(filename=fileName)
+            loader = essentia.standard.MonoLoader(filename=fileName)
 
             # and then we actually perform the loading:
-            audio = self.loader()
+            audio = loader()
 
         return audio
 
@@ -155,20 +169,22 @@ class Extractor:
         slices = None
         onsetTimes = None
 
+        onsetRate = essentia.standard.OnsetRate()
+        duration = essentia.standard.Duration()
+
         if fileName:
             audio = self.loadAudio(fileName)
-            onsetRateResult = self.onsetRate(audio)
-            self.onsetRate.reset()
+            onsetRateResult = onsetRate(audio)
 
             onsetTimes, onsetRate  = onsetRateResult
             endTimes = onsetTimes[1:]
-            d = self.duration(audio)
+            d = duration(audio)
             endTimes = np.append(endTimes, d)
             endTimes = essentia.array(endTimes)
 
-            self.slicer.configure(startTimes=onsetTimes, endTimes=endTimes)
-            slices = self.slicer(audio)
-            self.slicer.reset()
+            slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
+
+            slices = slicer(audio)
 
         return onsetTimes, slices, fileName
 
@@ -272,27 +288,28 @@ class Extractor:
             if os.path.isdir(f):
                 # use all files in the given path
                 files = glob.glob(f + '/*.wav')
+                files = files + glob.glob(f + '/*.mp3')
             else:
                 # file was given, append to list
                 files.append(f)
         # only process .wav files
-        files = fnmatch.filter(files, '*.wav')
+        # files = fnmatch.filter(files, '*.wav')
         files.sort()
 
         return files
 
     def __init__(self, frameSize = 4096, hopSize = frameSize/2):
-        self.loader = essentia.standard.MonoLoader()
-        self.writer = essentia.standard.MonoWriter()
-        self.onsetRate = essentia.standard.OnsetRate()
-        self.slicer = essentia.standard.Slicer()
-        self.duration = essentia.standard.Duration()
-        self.mfcc = essentia.standard.MFCC()
-        self.spectrum = essentia.standard.Spectrum()
-        self.w = essentia.standard.Windowing(type = 'hann')
-        self.pitch = essentia.standard.PitchYinFFT()
-        self.fft = essentia.standard.FFT()
-        self.magnitude = essentia.standard.Magnitude()
+        # self.loader = essentia.standard.MonoLoader()
+        # self.writer = essentia.standard.MonoWriter()
+        # self.onsetRate = essentia.standard.OnsetRate()
+        # self.slicer = essentia.standard.Slicer()
+        # self.duration = essentia.standard.Duration()
+        # self.mfcc = essentia.standard.MFCC()
+        # self.spectrum = essentia.standard.Spectrum()
+        # self.w = essentia.standard.Windowing(type = 'hann')
+        # self.pitch = essentia.standard.PitchYinFFT()
+        # self.fft = essentia.standard.FFT()
+        # self.magnitude = essentia.standard.Magnitude()
 
         self.frameSize = frameSize
         self.hopSize = hopSize
