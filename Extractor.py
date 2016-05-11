@@ -58,7 +58,7 @@ class Extractor:
 
         return audio
 
-    def resynthesise_audio(self, sequence, features):
+    def resynthesise_audio(self, sequence, ffts):
         audio = []
         ifft = essentia.standard.IFFT()
         overlapAdd = essentia.standard.OverlapAdd(frameSize = self.frameSize, hopSize = self.hopSize, gain=1.0/self.frameSize)
@@ -68,7 +68,8 @@ class Extractor:
         for unit in sequence:
             fileIndex, onsetIndex, frameIndex = unit
 
-            clip = ifft(features[fileIndex][onsetIndex]["onsetFeatures"][frameIndex]["fft"])
+            # clip = ifft(features[fileIndex][onsetIndex]["onsetFeatures"][frameIndex]["fft"])
+            clip = ifft(ffts[fileIndex][onsetIndex][frameIndex])
             # clip = self.w(clip)
             clip = overlapAdd(clip)
 
@@ -127,6 +128,7 @@ class Extractor:
         yin = essentia.standard.PitchYinFFT()
 
         features = []
+        ffts = []
 
         for fstart in range(0, len(audio) - self.frameSize, self.hopSize):
             frame = audio[fstart:fstart + self.frameSize]
@@ -138,20 +140,17 @@ class Extractor:
 
             mfcc_bands, mfcc_coeffs = mfcc(mag)
 
-            frameFeatures = {}
 
-            frameFeatures["vector"] = pitch
-            # frameFeatures["vector"] = np.append(frameFeatures["vector"], mfcc_coeffs)
-            frameFeatures["fft"] = fft_frame
 
-            features.append(frameFeatures)
+            features.append([pitch])
+            ffts.append(fft_frame)
 
         # for frame in essentia.standard.FrameGenerator(audio, frameSize=1024, hopSize=512):
         #     mfcc_bands, mfcc_coeffs = self.mfcc(self.spectrum(self.w(frame)))
         #     pool.add('lowlevel.mfcc', mfcc_coeffs)
         #     pool.add('lowlevel.mfcc_bands', mfcc_bands)
 
-        return features
+        return features, ffts
 
     def loadAudio(self, fileName):
 
@@ -230,18 +229,17 @@ class Extractor:
         if (writeOnsets):
             fileNames = self.writeOnsets(onsets, file)
 
-        fileFeatures = []
+        features = []
+        ffts = []
 
         for onsetTime, onset in zip(onsetTimes, onsets):
-            features = self.extractFeatures(onset)
+            onsetFeatures, onsetFFTs = self.extractFeatures(onset)
 
-            onsetFeatures = {}
-            onsetFeatures["onsetTime"] = onsetTime
-            onsetFeatures["onsetFeatures"] = features
 
-            fileFeatures.append(onsetFeatures)
+            features.append(onsetFeatures)
+            ffts.append(onsetFFTs)
 
-        return fileFeatures
+        return features, ffts
 
     def analyseFile(self,file, writeOnsets, onsetBased = True):
         """
@@ -266,18 +264,16 @@ class Extractor:
         if (writeOnsets):
             fileNames = self.writeOnsets(onsets, file)
 
-        fileFeatures = []
+        features = []
+        ffts = []
 
         for onsetTime, onset in zip(onsetTimes, onsets):
-            features = self.extractFeatures(onset)
+            onsetFeatures, onsetFFTs = self.extractFeatures(onset)
 
-            onsetFeatures = {}
-            onsetFeatures["onsetTime"] = onsetTime
-            onsetFeatures["onsetFeatures"] = features
+            features.append(onsetFeatures)
+            ffts.append(onsetFFTs)
 
-            fileFeatures.append(onsetFeatures)
-
-        return fileFeatures
+        return features, ffts
 
     def analyseFiles(self,listOfFiles):
         """
@@ -285,13 +281,15 @@ class Extractor:
         :param listOfFiles:
         :return:
         """
-        filesFeatures = []
+        features = []
+        ffts = []
 
         for file in listOfFiles:
-            fileFeatures = self.analyseFile(file, False, False)
-            filesFeatures.append(fileFeatures)
+            fileFeatures, fileFFTs = self.analyseFile(file, False, False)
+            features.append(fileFeatures)
+            ffts.append(fileFFTs)
 
-        return filesFeatures
+        return features, ffts
 
     def getListOfWavFiles(self,location):
         import os.path

@@ -1,8 +1,10 @@
 #!/usr/bin/python
 from scipy.spatial import distance
+from scipy import spatial
 from Extractor import Extractor
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 extractor = Extractor()
 
@@ -11,13 +13,13 @@ def plotData(sequence, targetFeatures, corpusFeatures):
     corpusPoints = []
 
     for onset in targetFeatures:
-        for frame in onset["onsetFeatures"]:
-            targetPoints.append(frame["vector"])
+        for frame in onset:
+            targetPoints.append(frame)
 
     for unit in sequence:
         fileIndex, onsetIndex, frameIndex = unit
 
-        corpusPoints.append(corpusFeatures[fileIndex][onsetIndex]["onsetFeatures"][frameIndex]["vector"])
+        corpusPoints.append(corpusFeatures[fileIndex][onsetIndex][frameIndex])
 
     plt.subplot(211)
     plt.plot(targetPoints)
@@ -27,8 +29,24 @@ def plotData(sequence, targetFeatures, corpusFeatures):
     plt.show()
 
 
+def kdTree(targetFeature, corpusFeatures):
+    closestFileIndex = 0
+    closestOnsetIndex = 0
+    closestFrameIndex = 0
 
-def unitSelectionSimple(targetFeature, corpusFeatures, sequence):
+    #Use full dataset
+    for fileIndex, corpusFile in enumerate(corpusFeatures):
+        for onsetIndex, corpusOnset in enumerate(corpusFile):
+            tree = spatial.KDTree(corpusOnset) #Frames
+            a, b = tree.query(targetFeature)
+
+            closestFileIndex  = fileIndex
+            closestOnsetIndex = onsetIndex
+            closestFrameIndex = b
+
+    return closestFileIndex, closestOnsetIndex, closestFrameIndex
+
+def linearSearchSimple(targetFeature, corpusFeatures, sequence):
     bestTargetCost = 0.0
     closestFileIndex = 0
     closestOnsetIndex = 0
@@ -38,9 +56,8 @@ def unitSelectionSimple(targetFeature, corpusFeatures, sequence):
 
     for fileIndex, corpusFile in enumerate(corpusFeatures):
         for onsetIndex, corpusOnset in enumerate(corpusFile):
-            onsetTime = corpusOnset["onsetTime"]
-            for frameIndex, corpusFrame in enumerate(corpusOnset["onsetFeatures"]):
-                targetCost = distance.euclidean(targetFeature, corpusFrame["vector"])
+            for frameIndex, corpusFrame in enumerate(corpusOnset):
+                targetCost = distance.cdist([targetFeature], [corpusFrame], 'euclidean')
 
                 if start:
                     bestTargetCost = targetCost
@@ -101,9 +118,10 @@ def createSequence(targetFeatures, corpusFeatures):
 
     for targetOnsetCounter, targetOnset in enumerate(targetFeatures):
         print("Getting target onset "  + str(targetOnsetCounter) + " out of " + str(len(targetFeatures)))
-        for targetFrameCounter, targetFrame in enumerate(targetOnset["onsetFeatures"]):
-            print("Getting target frame " + str(targetFrameCounter) + " out of " + str(len(targetOnset["onsetFeatures"])))
-            sequence.append(unitSelectionSimple(targetFrame["vector"], corpusFeatures, sequence))
+        for targetFrameCounter, targetFrame in enumerate(targetOnset):
+            print("Getting target frame " + str(targetFrameCounter) + " out of " + str(len(targetOnset)))
+            # sequence.append(linearSearchSimple(targetFrame, corpusFeatures, sequence))
+            sequence.append(kdTree(targetFrame, corpusFeatures))
 
     return sequence
 
@@ -164,10 +182,11 @@ def main():
     # extractor.writeAudio(b, "/Users/carthach/Desktop/out.wav")
 
     # Concatenative Synthesis
-    targetFeatures = extractor.analyseFile(targetFilename, False, False)
-    corpusFeatures = extractor.analyseFiles(corpusFilenames)
+    targetFeatures, targetFFTs = extractor.analyseFile(targetFilename, False, False)
+    corpusFeatures, corpusFFTs  = extractor.analyseFiles(corpusFilenames)
+
     sequence = createSequence(targetFeatures, corpusFeatures)
-    audio = extractor.resynthesise_audio(sequence, corpusFeatures)
+    audio = extractor.resynthesise_audio(sequence, corpusFFTs)
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
 
     plotData(sequence, targetFeatures, corpusFeatures)
