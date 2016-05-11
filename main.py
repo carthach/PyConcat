@@ -1,17 +1,37 @@
 #!/usr/bin/python
 from scipy.spatial import distance
 from Extractor import Extractor
+import matplotlib.pyplot as plt
 import numpy as np
 
 extractor = Extractor()
 
-def closestUnit(targetFeature, corpusFeatures, sequence):
-    targetCost = 0.0
-    concatCost = 0.0
-    totalCost = 0.0
+def plotData(sequence, targetFeatures, corpusFeatures):
+    targetPoints = []
+    corpusPoints = []
+
+    for onset in targetFeatures:
+        for frame in onset["onsetFeatures"]:
+            targetPoints.append(frame["vector"])
+
+    for unit in sequence:
+        fileIndex, onsetIndex, frameIndex = unit
+
+        corpusPoints.append(corpusFeatures[fileIndex][onsetIndex]["onsetFeatures"][frameIndex]["vector"])
+
+    plt.subplot(211)
+    plt.plot(targetPoints)
+    plt.subplot(212)
+    plt.plot(corpusPoints)
+
+    plt.show()
+
+
+
+def unitSelectionSimple(targetFeature, corpusFeatures, sequence):
+    bestTargetCost = 0.0
     closestFileIndex = 0
     closestOnsetIndex = 0
-    closestOnsetTime = 0.0
     closestFrameIndex = 0
 
     start = True
@@ -20,22 +40,56 @@ def closestUnit(targetFeature, corpusFeatures, sequence):
         for onsetIndex, corpusOnset in enumerate(corpusFile):
             onsetTime = corpusOnset["onsetTime"]
             for frameIndex, corpusFrame in enumerate(corpusOnset["onsetFeatures"]):
-                currentTargetCost = distance.euclidean(targetFeature, corpusFrame["vector"])
-                currentCost = currentTargetCost
-
-                # currentConcatCost = 0.0
-                # if len(sequence):
-                #     lastFileIndex, lastOnsetIndex, lastFrameIndex = sequence[-1]
-                #     lastFeatureVector = corpusFeatures[lastFileIndex][lastOnsetIndex]["onsetFeatures"][lastFrameIndex]["vector"]
-                #     currentConcatCost = distance.euclidean(corpusFrame["vector"], lastFeatureVector)
-                #
-                #     currentCost = currentCost + currentConcatCost * 0.5
+                targetCost = distance.euclidean(targetFeature, corpusFrame["vector"])
 
                 if start:
-                    totalCost = currentCost
+                    bestTargetCost = targetCost
                     start = False
-                elif currentCost < totalCost:
-                    totalCost = currentCost
+                elif targetCost < bestTargetCost:
+                    bestTargetCost = targetCost
+                    print("bestTargetCost: " + str(bestTargetCost))
+                    closestFileIndex = fileIndex
+                    closestOnsetIndex= onsetIndex
+                    closestFrameIndex = frameIndex
+
+    return closestFileIndex, closestOnsetIndex, closestFrameIndex
+
+def unitSelection(targetFeature, corpusFeatures, sequence):
+    bestTargetCost = 0.0
+    bestConcatCost= 0.0
+    bestTotalCost = 0.0
+    closestFileIndex = 0
+    closestOnsetIndex = 0
+    closestOnsetTime = 0.0
+    closestFrameIndex = 0
+
+    targetCostWeight = 1.0
+    concatCostWeight = 0.95
+
+    start = True
+
+    for fileIndex, corpusFile in enumerate(corpusFeatures):
+        for onsetIndex, corpusOnset in enumerate(corpusFile):
+            onsetTime = corpusOnset["onsetTime"]
+            for frameIndex, corpusFrame in enumerate(corpusOnset["onsetFeatures"]):
+                targetCost = distance.euclidean(targetFeature, corpusFrame["vector"])
+                totalCost= targetCost
+
+                concatCost = 0.0
+                if len(sequence):
+                    lastFileIndex, lastOnsetIndex, lastFrameIndex = sequence[-1]
+                    lastFeatureVector = corpusFeatures[lastFileIndex][lastOnsetIndex]["onsetFeatures"][lastFrameIndex]["vector"]
+                    concatCost = distance.euclidean(corpusFrame["vector"], lastFeatureVector)
+
+                    #Compute total cost
+                    totalCost = targetCostWeight * targetCost + concatCostWeight * concatCost
+
+                if start:
+                    bestTotalCost = totalCost
+                    start = False
+                elif totalCost < bestTotalCost:
+                    bestTotalCost = totalCost
+
                     closestFileIndex = fileIndex
                     closestOnsetIndex= onsetIndex
                     closestFrameIndex = frameIndex
@@ -45,10 +99,11 @@ def closestUnit(targetFeature, corpusFeatures, sequence):
 def createSequence(targetFeatures, corpusFeatures):
     sequence = []
 
-    for targetOnset in targetFeatures:
-        print("Getting target onset")
-        for targetFrame in targetOnset["onsetFeatures"]:
-            sequence.append(closestUnit(targetFrame["vector"], corpusFeatures, sequence))
+    for targetOnsetCounter, targetOnset in enumerate(targetFeatures):
+        print("Getting target onset "  + str(targetOnsetCounter) + " out of " + str(len(targetFeatures)))
+        for targetFrameCounter, targetFrame in enumerate(targetOnset["onsetFeatures"]):
+            print("Getting target frame " + str(targetFrameCounter) + " out of " + str(len(targetOnset["onsetFeatures"])))
+            sequence.append(unitSelectionSimple(targetFrame["vector"], corpusFeatures, sequence))
 
     return sequence
 
@@ -108,26 +163,21 @@ def main():
     # b = extractor.synthResynth(a)
     # extractor.writeAudio(b, "/Users/carthach/Desktop/out.wav")
 
-    # #Analyse the file and keep the features but not the audio
-    targetFeatures = extractor.analyseFile(targetFilename, False)
+    # Concatenative Synthesis
+    targetFeatures = extractor.analyseFile(targetFilename, False, False)
     corpusFeatures = extractor.analyseFiles(corpusFilenames)
     sequence = createSequence(targetFeatures, corpusFeatures)
     audio = extractor.resynthesise_audio(sequence, corpusFeatures)
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
 
-    # extractor.writeAudio(extractor.resynthesise_audio(sequence, corpusFeatures), "/Users/carthach/Desktop/out.wav")
-    print("Done")
-    # onsets = extractor.extractOnsets(targetFilename)[0]
+    plotData(sequence, targetFeatures, corpusFeatures)
 
-    # extractor.writeOnsets(onsets, targetFilename)
-    # features = extractor.extractFeatures(onsets[0])
+    #Test segmenter
     # audio = extractor.loadAudio(targetFilename)
-    # extractor.testing(onsets[13], audio)
+    # onsetTimes = extractor.extractOnsets(targetFilename)[0]
+    # segments = extractor.segmentSignal(onsetTimes, audio)
 
-    #corpusFeatures = extractor.analyseFiles(corpusFiles)
-
-    #sequence = createSequence(targetFeatures, corpusFeatures)
-    #writeSequence(sequence, "out.wav")
+    print "done"
 
 if __name__ == '__main__':
     # parse arguments

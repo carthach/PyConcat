@@ -6,21 +6,28 @@ import matplotlib.pyplot as plt
 import peakutils
 
 class Extractor:
-    #Features
-    # loader = None
-    # writer = None
-    # onsetRate = None
-    # slicer = None
-    # duration = None
-    # mfcc = None
-    # fft = None
-    # magnitude = None
-    # spectrum = None
-    # w = None
-    # pitch = None
+    frameSize = 4096
+    hopSize = 2048
 
-    frameSize = 2048
-    hopSize = 0
+    def mySlicer(self, onsetTimes, audio):
+
+        segments = []
+
+        for onsetTimeCounter in range(len(onsetTimes)):
+            startOnsetTimeInSamples = int(onsetTimes[onsetTimeCounter] * 44100.0)
+
+            endOnsetTimeInSamples = 0
+
+            if onsetTimeCounter + 1 == len(onsetTimes):
+                endOnsetTimeInSamples = len(audio)
+            else:
+                endOnsetTimeInSamples = int(onsetTimes[onsetTimeCounter + 1] * 44100.0)
+
+            segment = audio[startOnsetTimeInSamples:endOnsetTimeInSamples]
+
+            segments.append(segment)
+
+        return segments
 
     def synthResynth(self, audio):
         fft = essentia.standard.FFT()
@@ -236,13 +243,23 @@ class Extractor:
 
         return fileFeatures
 
-    def analyseFile(self,file, writeOnsets):
+    def analyseFile(self,file, writeOnsets, onsetBased = True):
         """
         Extract onsets from a single file then extract features from all those onsets
         :param file:
         :return:
         """
-        onsetTimes, onsets, fileName = self.extractOnsets(file)
+
+        onsetTimes = []
+        onsets = []
+        fileName = file
+
+        if onsetBased:
+            onsetTimes, onsets, fileName = self.extractOnsets(file)
+        else:
+            onsetTimes.append(0.0)
+            audio = self.loadAudio(file)
+            onsets.append(audio)
 
         print("Processing file: " + file)
 
@@ -271,7 +288,7 @@ class Extractor:
         filesFeatures = []
 
         for file in listOfFiles:
-            fileFeatures = self.analyseFile(file, False)
+            fileFeatures = self.analyseFile(file, False, False)
             filesFeatures.append(fileFeatures)
 
         return filesFeatures
@@ -297,19 +314,3 @@ class Extractor:
         files.sort()
 
         return files
-
-    def __init__(self, frameSize = 4096, hopSize = frameSize/2):
-        # self.loader = essentia.standard.MonoLoader()
-        # self.writer = essentia.standard.MonoWriter()
-        # self.onsetRate = essentia.standard.OnsetRate()
-        # self.slicer = essentia.standard.Slicer()
-        # self.duration = essentia.standard.Duration()
-        # self.mfcc = essentia.standard.MFCC()
-        # self.spectrum = essentia.standard.Spectrum()
-        # self.w = essentia.standard.Windowing(type = 'hann')
-        # self.pitch = essentia.standard.PitchYinFFT()
-        # self.fft = essentia.standard.FFT()
-        # self.magnitude = essentia.standard.Magnitude()
-
-        self.frameSize = frameSize
-        self.hopSize = hopSize
