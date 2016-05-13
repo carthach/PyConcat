@@ -29,22 +29,16 @@ def plotData(sequence, targetFeatures, corpusFeatures):
     plt.show()
 
 
-def kdTree(targetFeature, corpusFeatures):
+def kdTree(targetFeatures, corpusFeatures):
     closestFileIndex = 0
     closestOnsetIndex = 0
     closestFrameIndex = 0
 
-    #Use full dataset
-    for fileIndex, corpusFile in enumerate(corpusFeatures):
-        for onsetIndex, corpusOnset in enumerate(corpusFile):
-            tree = spatial.KDTree(corpusOnset) #Frames
-            a, b = tree.query(targetFeature)
 
-            closestFileIndex  = fileIndex
-            closestOnsetIndex = onsetIndex
-            closestFrameIndex = b
+    tree = spatial.KDTree(corpusFeatures) #Frames
+    a, b = tree.query(targetFeatures)
 
-    return closestFileIndex, closestOnsetIndex, closestFrameIndex
+    return b
 
 def linearSearchSimple(targetFeature, corpusFeatures, sequence):
     bestTargetCost = 0.0
@@ -116,14 +110,17 @@ def unitSelection(targetFeature, corpusFeatures, sequence):
 def createSequence(targetFeatures, corpusFeatures):
     sequence = []
 
-    for targetOnsetCounter, targetOnset in enumerate(targetFeatures):
-        print("Getting target onset "  + str(targetOnsetCounter) + " out of " + str(len(targetFeatures)))
-        for targetFrameCounter, targetFrame in enumerate(targetOnset):
-            print("Getting target frame " + str(targetFrameCounter) + " out of " + str(len(targetOnset)))
-            # sequence.append(linearSearchSimple(targetFrame, corpusFeatures, sequence))
-            sequence.append(kdTree(targetFrame, corpusFeatures))
+    # for targetOnsetCounter, targetOnset in enumerate(targetFeatures):
+    #     print("Getting target onset "  + str(targetOnsetCounter) + " out of " + str(len(targetFeatures)))
+    #     for targetFrameCounter, targetFrame in enumerate(targetOnset):
+    #         print("Getting target frame " + str(targetFrameCounter) + " out of " + str(len(targetOnset)))
+    #         # sequence.append(linearSearchSimple(targetFrame, corpusFeatures, sequence))
+    #         sequence.append(kdTree(targetFrame, corpusFeatures))
 
-    return sequence
+
+    return kdTree(targetFeatures, corpusFeatures)
+
+
 
 def writeSequence(sequence, corpusFilenames):
 

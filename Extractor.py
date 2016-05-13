@@ -7,7 +7,7 @@ import peakutils
 
 class Extractor:
     frameSize = 4096
-    hopSize = 2048
+    hopSize = frameSize/2
 
     def mySlicer(self, onsetTimes, audio):
 
@@ -66,10 +66,11 @@ class Extractor:
         i = 0
 
         for unit in sequence:
-            fileIndex, onsetIndex, frameIndex = unit
+            # fileIndex, onsetIndex, frameIndex = unit
 
             # clip = ifft(features[fileIndex][onsetIndex]["onsetFeatures"][frameIndex]["fft"])
-            clip = ifft(ffts[fileIndex][onsetIndex][frameIndex])
+            # clip = ifft(ffts[fileIndex][onsetIndex][frameIndex])
+            clip = ifft(ffts[unit])
             # clip = self.w(clip)
             clip = overlapAdd(clip)
 
@@ -126,6 +127,7 @@ class Extractor:
         magnitude = essentia.standard.Magnitude()
         w = essentia.standard.Windowing(type='hann')
         yin = essentia.standard.PitchYinFFT()
+        energy = essentia.standard.Energy()
 
         features = []
         ffts = []
@@ -139,10 +141,11 @@ class Extractor:
             pitch, pitchConfidence = yin(mag)
 
             mfcc_bands, mfcc_coeffs = mfcc(mag)
+            e = energy(frame)
 
+            f = pitch + e + mfcc_coeffs
 
-
-            features.append([pitch])
+            features.append(f)
             ffts.append(fft_frame)
 
         # for frame in essentia.standard.FrameGenerator(audio, frameSize=1024, hopSize=512):
@@ -236,8 +239,11 @@ class Extractor:
             onsetFeatures, onsetFFTs = self.extractFeatures(onset)
 
 
-            features.append(onsetFeatures)
-            ffts.append(onsetFFTs)
+            # features.append(onsetFeatures)
+            # ffts.append(onsetFFTs)
+
+            features = features + onsetFeatures
+            ffts = ffts + onsetFFTs
 
         return features, ffts
 
@@ -270,8 +276,11 @@ class Extractor:
         for onsetTime, onset in zip(onsetTimes, onsets):
             onsetFeatures, onsetFFTs = self.extractFeatures(onset)
 
-            features.append(onsetFeatures)
-            ffts.append(onsetFFTs)
+            # features.append(onsetFeatures)
+            # ffts.append(onsetFFTs)
+
+            features = features + onsetFeatures
+            ffts = ffts + onsetFFTs
 
         return features, ffts
 
@@ -286,8 +295,12 @@ class Extractor:
 
         for file in listOfFiles:
             fileFeatures, fileFFTs = self.analyseFile(file, False, False)
-            features.append(fileFeatures)
-            ffts.append(fileFFTs)
+
+            # features.append(fileFeatures)
+            # ffts.append(fileFFTs)
+
+            features = features + fileFeatures
+            ffts = ffts + fileFFTs
 
         return features, ffts
 
