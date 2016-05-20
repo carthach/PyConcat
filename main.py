@@ -4,7 +4,7 @@ from scipy import spatial
 from Extractor import Extractor
 import matplotlib.pyplot as plt
 import numpy as np
-
+from sklearn import preprocessing
 
 extractor = Extractor()
 
@@ -34,9 +34,13 @@ def kdTree(targetFeatures, corpusFeatures):
     closestOnsetIndex = 0
     closestFrameIndex = 0
 
+    min_max_scaler = preprocessing.MinMaxScaler()
 
-    tree = spatial.KDTree(corpusFeatures) #Frames
-    a, b = tree.query(targetFeatures)
+    corpusFeaturesScaled = min_max_scaler.fit_transform(corpusFeatures)
+    targetFeaturesScaled = min_max_scaler.fit_transform(targetFeatures)
+
+    tree = spatial.KDTree(corpusFeaturesScaled) #Frames
+    a, b = tree.query(targetFeaturesScaled)
 
     return b
 

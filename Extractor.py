@@ -125,9 +125,17 @@ class Extractor:
         mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
         fft = essentia.standard.FFT()
         magnitude = essentia.standard.Magnitude()
-        w = essentia.standard.Windowing(type='hann')
+        w = essentia.standard.Windowing(type='blackmanharris62')
         yin = essentia.standard.PitchYinFFT()
         energy = essentia.standard.Energy()
+
+        spectralPeaks = essentia.standard.SpectralPeaks(orderBy =  "magnitude",
+                                                        magnitudeThreshold = 1e-05,
+                                                        minFrequency = 40,
+                                                        maxFrequency = 5000,
+                                                        maxPeaks = 10000)
+
+        hpcp = essentia.standard.HPCP()
 
         features = []
         ffts = []
@@ -143,7 +151,12 @@ class Extractor:
             mfcc_bands, mfcc_coeffs = mfcc(mag)
             e = energy(frame)
 
-            f = pitch + e + mfcc_coeffs
+            #Key
+            frequencies, magnitudes = spectralPeaks(mag)
+
+            pcps = hpcp(frequencies, magnitudes)
+
+            f = pcps
 
             features.append(f)
             ffts.append(fft_frame)
