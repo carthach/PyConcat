@@ -9,6 +9,7 @@ class Extractor:
     x = 0
     frameSize = 4096
     hopSize = frameSize/2
+    sampleRate = 44100
 
     def mySlicer(self, onsetTimes, audio):
         """
@@ -65,11 +66,34 @@ class Extractor:
 
         return audio_out
 
-    def concat(self, sequence, units):
+    def pad(self, audio, padLength):
+        audio
+
+    def concatBeats(self, sequence, units, unitTimes = []):
+        """
+
+        :param sequence:
+        :param units:
+        :param unitTimes:
+        :return:
+        """
         audio = []
 
-        for i in sequence:
-            audio = np.append(audio, units[i])
+        for i, item in enumerate(sequence):
+            unit = units[item]
+
+            if len(unitTimes) and i != len(sequence) - 1:
+                timeToNext = unitTimes[i+1] - unitTimes[i]
+                timeToNextInSamples = timeToNext * self.sampleRate
+                timeToNextInSamples = int(timeToNextInSamples)
+
+                if len(units[item]) < timeToNextInSamples:
+                    padWidth = timeToNextInSamples-len(units[item])
+                    unit = np.pad(units[item], (0, padWidth),  mode='constant', constant_values=0)
+                elif len(units[item]) > timeToNextInSamples:
+                    unit = units[item][:timeToNextInSamples]
+
+            audio = np.append(audio, unit)
 
         return audio
 
@@ -164,6 +188,31 @@ class Extractor:
 
     ######################
 
+    def extractBeats(self, fileName):
+
+        slices = None
+        ticks = None
+
+        beatTracker = essentia.standard.BeatTrackerDegara()
+        duration = essentia.standard.Duration()
+
+        if fileName:
+            audio = self.loadAudio(fileName)
+
+            ticks = beatTracker(audio)
+
+            endTimes = ticks[1:]
+            d = duration(audio)
+            endTimes = np.append(endTimes, d)
+            endTimes = essentia.array(endTimes)
+
+            # slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
+            # slices = slicer(audio)
+
+            slices = self.mySlicer(ticks, audio)
+
+        return ticks, slices, fileName
+
     def extractOnsets(self,fileName):
         """
         Extract and return a vector of onsets as audio vectors
@@ -218,7 +267,7 @@ class Extractor:
 
         return fileNames
 
-    def extractFeatures(self,audio, onsetBased = True):
+    def extractFeatures(self,audio, scale = "beats"):
         """
         Extract features from an audio vector.
         This tends to be pretty slow for onset based segmentation and retrieval
@@ -239,6 +288,8 @@ class Extractor:
                                                         minFrequency = 40,
                                                         maxFrequency = 5000,
                                                         maxPeaks = 10000)
+
+        centroid = essentia.standard.Centroid(range = self.sampleRate/2)
 
         hpcp = essentia.standard.HPCP()
 
@@ -272,29 +323,38 @@ class Extractor:
             #Energy
             e = energy(frame)
 
+            c = centroid(mag)
+
             #Key
             frequencies, magnitudes = spectralPeaks(mag)
             pcps = hpcp(frequencies, magnitudes)
             f.append(pcps)
 
-            pool.add("PCPS", pcps)
+            pool.add("energy", e)
+            pool.add("centroid", c)
+            pool.add("pcps", pcps)
+            pool.add("mfccs", mfcc_coeffs[1])
 
             #If we are spectral based we need to return the fft frames as units
-            if not onsetBased:
+            if scale is "spectral":
                 units.append(fft_frame)
 
-        if onsetBased:
-            aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean', 'var'])(pool)
-            if "PCPS.mean" in aggrPool.descriptorNames():
-                features = aggrPool["PCPS.mean"]
-            elif "PCPS" in aggrPool.descriptorNames():
-                features = aggrPool["PCPS"][0]
+        if scale is "spectral":
+            for feature in pool.descriptorNames():
+                features += pool[feature]
         else:
-            features = pool["PCPS"]
+            aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean'])(pool)
+
+            for feature in aggrPool.descriptorNames():
+                if "mean" in feature:
+                    feat = aggrPool[feature]
+                    features = np.append(features, aggrPool[feature])
+                else:
+                    features += aggrPool[feature][0]
 
         return features, units
 
-    def analyseFile(self,file, writeOnsets, onsetBased = True):
+    def analyseFile(self,file, writeOnsets, scale = "beats"):
         """
         Extract onsets from a single file then extract features from all those onsets
         :param file:
@@ -310,8 +370,10 @@ class Extractor:
         print("Processing file: " + file)
 
         #Extract onsets or add the audio as a single onset
-        if onsetBased:
-            print("    Onset Detection and Segmentation...")
+        print("    Onset Detection and Segmentation...")
+        if scale is "beats":
+            onsetTimes, onsets, fileName = self.extractBeats(file)
+        elif scale is "onsets":
             onsetTimes, onsets, fileName = self.extractOnsets(file)
         else:
             onsetTimes.append(0.0)
@@ -328,20 +390,20 @@ class Extractor:
         print("    Feature Extraction...")
 
         for onsetTime, onset in zip(onsetTimes, onsets):
-            onsetFeatures, onsetFFTs = self.extractFeatures(onset, onsetBased)
+            onsetFeatures, onsetFFTs = self.extractFeatures(onset, scale)
 
             features.append(onsetFeatures)
 
             #If it's not onset based then spectra are the units, append
-            if not onsetBased:
+            if scale is "spectral":
                 units = units + onsetFFTs
 
-        if onsetBased:
+        if scale is not "spectral":
             units = onsets
 
-        return features, units
+        return features, units, onsetTimes
 
-    def analyseFiles(self,listOfFiles, onsetBased = True):
+    def analyseFiles(self,listOfFiles, scale = "beats"):
         """
         Perform onset detection and extract features from all the onsets from all the files
         :param listOfFiles:
@@ -349,15 +411,17 @@ class Extractor:
         """
         features = []
         units = []
+        unitTimes = []
 
         for file in listOfFiles:
-            fileFeatures, fileUnits = self.analyseFile(file, False, onsetBased)
+            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, False, scale)
 
             # features.append(fileFeatures)
             # ffts.append(fileFFTs)
 
             features += fileFeatures
             units += fileUnits
+            unitTimes = np.append(unitTimes, fileUnitTimes)
 
-        return features, units
+        return features, units, unitTimes
 

@@ -5,6 +5,7 @@ from Extractor import Extractor
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import preprocessing
+import os
 
 extractor = Extractor()
 
@@ -30,183 +31,112 @@ def plotData(sequence, targetFeatures, corpusFeatures):
 
 
 def kdTree(targetFeatures, corpusFeatures):
-    closestFileIndex = 0
-    closestOnsetIndex = 0
-    closestFrameIndex = 0
-
-    min_max_scaler = preprocessing.MinMaxScaler()
-
-    # corpusFeaturesScaled = corpusFeatures
-    # targetFeaturesScaled = targetFeatures
-
-    corpusFeaturesScaled = min_max_scaler.fit_transform(corpusFeatures)
-    targetFeaturesScaled = min_max_scaler.fit_transform(targetFeatures)
-
-    tree = spatial.KDTree(corpusFeaturesScaled) #Frames
-    a, b = tree.query(targetFeaturesScaled)
+    """
+    Faster than linearSearch
+    :param targetFeatures:
+    :param corpusFeatures:
+    :return:
+    """
+    tree = spatial.KDTree(corpusFeatures) #Frames
+    a, b = tree.query(targetFeatures)
 
     return b
 
-def linearSearchSimple(targetFeature, corpusFeatures, sequence):
-    bestTargetCost = 0.0
-    closestFileIndex = 0
-    closestOnsetIndex = 0
-    closestFrameIndex = 0
-
-    start = True
-
-    for fileIndex, corpusFile in enumerate(corpusFeatures):
-        for onsetIndex, corpusOnset in enumerate(corpusFile):
-            for frameIndex, corpusFrame in enumerate(corpusOnset):
-                targetCost = distance.cdist([targetFeature], [corpusFrame], 'euclidean')
-
-                if start:
-                    bestTargetCost = targetCost
-                    start = False
-                elif targetCost < bestTargetCost:
-                    bestTargetCost = targetCost
-                    print("bestTargetCost: " + str(bestTargetCost))
-                    closestFileIndex = fileIndex
-                    closestOnsetIndex= onsetIndex
-                    closestFrameIndex = frameIndex
-
-    return closestFileIndex, closestOnsetIndex, closestFrameIndex
-
-def unitSelection(targetFeature, corpusFeatures, sequence):
-    bestTargetCost = 0.0
-    bestConcatCost= 0.0
-    bestTotalCost = 0.0
-    closestFileIndex = 0
-    closestOnsetIndex = 0
-    closestOnsetTime = 0.0
-    closestFrameIndex = 0
-
-    targetCostWeight = 1.0
-    concatCostWeight = 0.95
-
-    start = True
-
-    for fileIndex, corpusFile in enumerate(corpusFeatures):
-        for onsetIndex, corpusOnset in enumerate(corpusFile):
-            onsetTime = corpusOnset["onsetTime"]
-            for frameIndex, corpusFrame in enumerate(corpusOnset["onsetFeatures"]):
-                targetCost = distance.euclidean(targetFeature, corpusFrame["vector"])
-                totalCost= targetCost
-
-                concatCost = 0.0
-                if len(sequence):
-                    lastFileIndex, lastOnsetIndex, lastFrameIndex = sequence[-1]
-                    lastFeatureVector = corpusFeatures[lastFileIndex][lastOnsetIndex]["onsetFeatures"][lastFrameIndex]["vector"]
-                    concatCost = distance.euclidean(corpusFrame["vector"], lastFeatureVector)
-
-                    #Compute total cost
-                    totalCost = targetCostWeight * targetCost + concatCostWeight * concatCost
-
-                if start:
-                    bestTotalCost = totalCost
-                    start = False
-                elif totalCost < bestTotalCost:
-                    bestTotalCost = totalCost
-
-                    closestFileIndex = fileIndex
-                    closestOnsetIndex= onsetIndex
-                    closestFrameIndex = frameIndex
-
-    return closestFileIndex, closestOnsetIndex, closestFrameIndex
-
-def createSequence(targetFeatures, corpusFeatures):
-    sequence = []
-
-    # for targetOnsetCounter, targetOnset in enumerate(targetFeatures):
-    #     print("Getting target onset "  + str(targetOnsetCounter) + " out of " + str(len(targetFeatures)))
-    #     for targetFrameCounter, targetFrame in enumerate(targetOnset):
-    #         print("Getting target frame " + str(targetFrameCounter) + " out of " + str(len(targetOnset)))
-    #         # sequence.append(linearSearchSimple(targetFrame, corpusFeatures, sequence))
-    #         sequence.append(kdTree(targetFrame, corpusFeatures))
+def linearSearch(targetFeatures, corpusFeatures):
+    from scipy.spatial import distance
 
 
-    targetFeatures = [x for x in targetFeatures if x != []]
-    corpusFeatures = [x for x in corpusFeatures if x != []]
-    return kdTree(targetFeatures, corpusFeatures)
+    targetCostMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
+    concatenationCostMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
+
+    for targetFeatureIndex, targetFeature in enumerate(targetFeatures[1:]):
+        pass
 
 
 
-def writeSequence(sequence, corpusFilenames):
 
-    fadeLength = 0
-    rampUp = np.linspace(0.0, 1.0, fadeLength)
-    rampDown = np.linspace(1.0, 0.0, fadeLength)
+    return 0
 
 
-    audios = []
-    for corpusFilename in corpusFilenames:
-        audio = extractor.loadAudio(corpusFilename)
-        audios.append(audio)
-
-    outputAudio = []
-    for unit in sequence:
-        fileIndex, onsetTime, frameIndex = unit
 
 
-        onsetTime = onsetTime * 44100
-        frameTime = onsetTime + (frameIndex * 1024)
-        endTime = int(frameTime+ 2048)
-        if endTime > len(audios[fileIndex]):
-            endTime = len(audios[fileIndex])
 
-        audioSlice = audios[fileIndex][frameTime:endTime]
 
-        #Fade out last n samples of outputAudio
+def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise=True):
+    """
+    Optionally normalise and use one of the methods to return a sequence of indices
+    :param targetFeatures:
+    :param corpusFeatures:
+    :param method:
+    :param normalise:
+    :return:
+    """
+    if normalise:
+        min_max_scaler = preprocessing.MinMaxScaler()
+        targetFeatures = min_max_scaler.fit_transform(targetFeatures)
+        corpusFeatures = min_max_scaler.fit_transform(corpusFeatures)
 
-        # if len(outputAudio):
-        #     outputAudio[-fadeLength:] = outputAudio[-fadeLength:] * rampDown
-        #     audioSlice[:fadeLength] = audioSlice[:fadeLength] * rampUp
-        #
-        #     outputAudio[-fadeLength:] = outputAudio[-fadeLength:] + audioSlice[:fadeLength]
-        #     outputAudio = np.append(outputAudio, audioSlice[fadeLength:])
-        # else:
-        outputAudio = np.append(outputAudio, audioSlice)
+    if method is "kdtree":
+        return kdTree(targetFeatures, corpusFeatures)
+    elif method is "linearSearch":
+        return linearSearch(targetFeatures, corpusFeatures)
 
-    extractor.writeAudio(outputAudio, "/Users/carthach/Desktop/out.wav")
+
+
+def getCorpus(path):
+    """
+    Utility tool to return the target and corpus path for a given path
+    :param path:
+    :return:
+    """
+    files = os.listdir(path)
+
+    targetFile = ""
+    corpusPath = ""
+
+    for file in files:
+        fullFilePath = path + "/" + file
+        if fullFilePath.endswith(('.mp3', '.wav')):
+            targetFile = fullFilePath
+        if os.path.isdir(fullFilePath):
+            corpusPath = fullFilePath
+
+    return targetFile, corpusPath
+
 
 def main():
     """
-
+    This shows how to input a folder for concatenative synthesis, segment/analyse then generate a sequence, write and plot
     :return:
     """
 
+    #Extrapolate the target file and corpus folder and get the list of corpus files
+    targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
+    # targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/beatport_test")
 
-    # targetFilename = "/Users/carthach/Desktop/debug_audio/breaks/5th Dimension - Rainmaker (part2).wav"
-    # targetFilename = "/Users/carthach/Desktop/debug_audio/beatport/0297579 Kelly Holiday - Moscow Time (Electro Mix) [Doctormusik Records] == Electro House === Am.mp3"
-    # corpusFilenames = extractor.getListOfWavFiles("/Users/carthach/Desktop/debug_audio/breaks")
+    corpusFilenames = extractor.getListOfWavFiles(corpusPath)
 
-    # targetFilename = "/Users/carthach/Desktop/debug_audio/python_test/melody9.wav"
-    # corpusFilenames = extractor.getListOfWavFiles("/Users/carthach/Desktop/debug_audio/python_test/corpus")
-
-    targetFilename = "/Users/carthach/Desktop/debug_audio/beatport_test/6105589 Kup - Feelings (Original Mix) [Soundfield] == Breaks === C#.mp3"
-    corpusFilenames = extractor.getListOfWavFiles("/Users/carthach/Desktop/debug_audio/beatport_test/corpus")
-
-    # a = extractor.loadAudio(targetFilename)
-    # b = extractor.synthResynth(a)
-    # extractor.writeAudio(b, "/Users/carthach/Desktop/out.wav")
-
-    # Concatenative Synthesis
+    #Segment and extract features
     print("Extracting Target")
-    targetFeatures, targetUnits = extractor.analyseFile(targetFilename, False, True)
+    targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, False, "beats")
     print("Extracting Corpus")
-    corpusFeatures, corpusUnits = extractor.analyseFiles(corpusFilenames, True)
+    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, "beats")
 
-    sequence = createSequence(targetFeatures, corpusFeatures)
+    #Generate a sequence based on similarity
+    print("Generating Sequence")
+    sequence = unitSelection(targetFeatures, corpusFeatures, method="linearSearch")
+
+    #If it's spectral-based used this
     # audio = extractor.reSynth(sequence, corpusFFTs)
-    audio = extractor.concat(sequence, corpusUnits)
+
+    #If it's beats based use this
+    audio = extractor.concatBeats(sequence, corpusUnits, targetUnitTimes)
+
+    #Write out the audio
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
 
-    plotData(sequence, targetFeatures, corpusFeatures)
-
-    #Test segmenter
-    # audio = extractor.loadAudio(targetFilename)
-    # onsetTimes = extractor.extractOnsets(targetFilename)[0]
-    # segments = extractor.segmentSignal(onsetTimes, audio)
+    #Optionally plot data
+    #plotData(sequence, targetFeatures, corpusFeatures)
 
     print "done"
 
