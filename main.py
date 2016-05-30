@@ -36,6 +36,9 @@ def kdTree(targetFeatures, corpusFeatures):
 
     min_max_scaler = preprocessing.MinMaxScaler()
 
+    # corpusFeaturesScaled = corpusFeatures
+    # targetFeaturesScaled = targetFeatures
+
     corpusFeaturesScaled = min_max_scaler.fit_transform(corpusFeatures)
     targetFeaturesScaled = min_max_scaler.fit_transform(targetFeatures)
 
@@ -122,6 +125,8 @@ def createSequence(targetFeatures, corpusFeatures):
     #         sequence.append(kdTree(targetFrame, corpusFeatures))
 
 
+    targetFeatures = [x for x in targetFeatures if x != []]
+    corpusFeatures = [x for x in corpusFeatures if x != []]
     return kdTree(targetFeatures, corpusFeatures)
 
 
@@ -175,19 +180,25 @@ def main():
     # targetFilename = "/Users/carthach/Desktop/debug_audio/beatport/0297579 Kelly Holiday - Moscow Time (Electro Mix) [Doctormusik Records] == Electro House === Am.mp3"
     # corpusFilenames = extractor.getListOfWavFiles("/Users/carthach/Desktop/debug_audio/breaks")
 
-    targetFilename = "/Users/carthach/Desktop/debug_audio/python_test/melody9.wav"
-    corpusFilenames = extractor.getListOfWavFiles("/Users/carthach/Desktop/debug_audio/python_test/corpus")
+    # targetFilename = "/Users/carthach/Desktop/debug_audio/python_test/melody9.wav"
+    # corpusFilenames = extractor.getListOfWavFiles("/Users/carthach/Desktop/debug_audio/python_test/corpus")
+
+    targetFilename = "/Users/carthach/Desktop/debug_audio/beatport_test/6105589 Kup - Feelings (Original Mix) [Soundfield] == Breaks === C#.mp3"
+    corpusFilenames = extractor.getListOfWavFiles("/Users/carthach/Desktop/debug_audio/beatport_test/corpus")
 
     # a = extractor.loadAudio(targetFilename)
     # b = extractor.synthResynth(a)
     # extractor.writeAudio(b, "/Users/carthach/Desktop/out.wav")
 
     # Concatenative Synthesis
-    targetFeatures, targetFFTs = extractor.analyseFile(targetFilename, False, False)
-    corpusFeatures, corpusFFTs  = extractor.analyseFiles(corpusFilenames)
+    print("Extracting Target")
+    targetFeatures, targetUnits = extractor.analyseFile(targetFilename, False, True)
+    print("Extracting Corpus")
+    corpusFeatures, corpusUnits = extractor.analyseFiles(corpusFilenames, True)
 
     sequence = createSequence(targetFeatures, corpusFeatures)
-    audio = extractor.resynthesise_audio(sequence, corpusFFTs)
+    # audio = extractor.reSynth(sequence, corpusFFTs)
+    audio = extractor.concat(sequence, corpusUnits)
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
 
     plotData(sequence, targetFeatures, corpusFeatures)

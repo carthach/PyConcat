@@ -6,10 +6,17 @@ import matplotlib.pyplot as plt
 import peakutils
 
 class Extractor:
+    x = 0
     frameSize = 4096
     hopSize = frameSize/2
 
     def mySlicer(self, onsetTimes, audio):
+        """
+        This can typically be faster than Essentia's slicer
+        :param onsetTimes:
+        :param audio:
+        :return:
+        """
 
         segments = []
 
@@ -30,6 +37,11 @@ class Extractor:
         return segments
 
     def synthResynth(self, audio):
+        """
+        Just to test that basic FFT synthesis / resynthesis works
+        :param audio:
+        :return:
+        """
         fft = essentia.standard.FFT()
         ifft = essentia.standard.IFFT()
         w = essentia.standard.Windowing(type = 'hann')
@@ -53,12 +65,24 @@ class Extractor:
 
         return audio_out
 
+    def concat(self, sequence, units):
+        audio = []
 
-
+        for i in sequence:
+            audio = np.append(audio, units[i])
 
         return audio
 
-    def resynthesise_audio(self, sequence, ffts):
+
+
+    def reSynth(self, sequence, ffts):
+        """
+        Resynthesise from the ffts, using a sequence of indices
+        :param sequence:
+        :param ffts:
+        :return:
+        """
+
         audio = []
         ifft = essentia.standard.IFFT()
         overlapAdd = essentia.standard.OverlapAdd(frameSize = self.frameSize, hopSize = self.hopSize, gain=1.0/self.frameSize)
@@ -82,94 +106,24 @@ class Extractor:
 
         return audio
 
-    def correlation(self,audio, main_audio):
-
-        cc = essentia.standard.CrossCorrelation(maxLag=len(main_audio))
-
-        cc_out = cc(main_audio, audio)
-
-        plt.subplot(311)
-        plt.plot(main_audio)
-        plt.subplot(312)
-        plt.plot(audio)
-        plt.subplot(313)
-        plt.plot(cc_out)
-
-        plt.show()
-
-    def testing(self, audio, main_audio):
-
-        cc = essentia.standard.AutoCorrelation()
-
-        cc_out = cc(main_audio)
-
-        peaks = peakutils.indexes(cc_out, 0.8, min_dist=50)
-
-        plt.subplot(311)
-        plt.plot(main_audio)
-        plt.subplot(312)
-        plt.plot(cc_out)
-        plt.plot(peaks, 'ro')
-
-        plt.show()
-
-
-    def extractFeatures(self,audio):
+    def writeAudio(self, audio, fileName):
         """
-        Extract features from an audio vector
+        Write a vector of audio to fileName
         :param audio:
+        :param fileName:
         :return:
         """
-
-        pool = essentia.Pool()
-        mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
-        fft = essentia.standard.FFT()
-        magnitude = essentia.standard.Magnitude()
-        w = essentia.standard.Windowing(type='blackmanharris62')
-        yin = essentia.standard.PitchYinFFT()
-        energy = essentia.standard.Energy()
-
-        spectralPeaks = essentia.standard.SpectralPeaks(orderBy =  "magnitude",
-                                                        magnitudeThreshold = 1e-05,
-                                                        minFrequency = 40,
-                                                        maxFrequency = 5000,
-                                                        maxPeaks = 10000)
-
-        hpcp = essentia.standard.HPCP()
-
-        features = []
-        ffts = []
-
-        for fstart in range(0, len(audio) - self.frameSize, self.hopSize):
-            frame = audio[fstart:fstart + self.frameSize]
-
-            fft_frame = fft(w(frame))
-            mag = magnitude(fft_frame)
-
-            pitch, pitchConfidence = yin(mag)
-
-            mfcc_bands, mfcc_coeffs = mfcc(mag)
-            e = energy(frame)
-
-            #Key
-            frequencies, magnitudes = spectralPeaks(mag)
-
-            pcps = hpcp(frequencies, magnitudes)
-
-            f = pcps
-
-            features.append(f)
-            ffts.append(fft_frame)
-
-        # for frame in essentia.standard.FrameGenerator(audio, frameSize=1024, hopSize=512):
-        #     mfcc_bands, mfcc_coeffs = self.mfcc(self.spectrum(self.w(frame)))
-        #     pool.add('lowlevel.mfcc', mfcc_coeffs)
-        #     pool.add('lowlevel.mfcc_bands', mfcc_bands)
-
-        return features, ffts
+        self.writer = essentia.standard.MonoWriter()
+        self.writer.configure(filename=fileName)
+        audio = essentia.array(audio)
+        self.writer(audio)
 
     def loadAudio(self, fileName):
-
+        """
+        Load audio from a fileName and return the audio vector
+        :param fileName:
+        :return:
+        """
         audio = None
 
         if fileName:
@@ -180,6 +134,35 @@ class Extractor:
 
         return audio
 
+    def getListOfWavFiles(self,location):
+        """
+        Get list of wav files (or mp3s) in a folder
+        :param location:
+        :return:
+        """
+        import os.path
+        import glob
+        import fnmatch
+        # determine the files to process
+        files = []
+        files.append(location)
+        for f in files:
+            # check what we have (file/path)
+            if os.path.isdir(f):
+                # use all files in the given path
+                files = glob.glob(f + '/*.wav')
+                files = files + glob.glob(f + '/*.mp3')
+            else:
+                # file was given, append to list
+                files.append(f)
+        # only process .wav files
+        # files = fnmatch.filter(files, '*.wav')
+        files.sort()
+
+        return files
+
+
+    ######################
 
     def extractOnsets(self,fileName):
         """
@@ -204,19 +187,20 @@ class Extractor:
             endTimes = np.append(endTimes, d)
             endTimes = essentia.array(endTimes)
 
-            slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
+            # slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
+            # slices = slicer(audio)
 
-            slices = slicer(audio)
+            slices = self.mySlicer(onsetTimes, audio)
 
         return onsetTimes, slices, fileName
 
-    def writeAudio(self, audio, fileName):
-        self.writer = essentia.standard.MonoWriter()
-        self.writer.configure(filename=fileName)
-        audio = essentia.array(audio)
-        self.writer(audio)
-
     def writeOnsets(self, onsets, fileName):
+        """
+        Write all the onsets to fileName_<no>.wav
+        :param onsets:
+        :param fileName:
+        :return:
+        """
         import os
 
         i = 0
@@ -234,31 +218,81 @@ class Extractor:
 
         return fileNames
 
-    def analyseAudio(self, audio, writeOnsets):
+    def extractFeatures(self,audio, onsetBased = True):
         """
-        Extract onsets from a single audio then extract features from all those onsets
-        :param file:
+        Extract features from an audio vector.
+        This tends to be pretty slow for onset based segmentation and retrieval
+        :param audio:
         :return:
         """
-        onsetTimes, onsets, fileName = self.extractOnsets(file)
 
-        if (writeOnsets):
-            fileNames = self.writeOnsets(onsets, file)
+        pool = essentia.Pool()
+        mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
+        fft = essentia.standard.FFT()
+        magnitude = essentia.standard.Magnitude()
+        w = essentia.standard.Windowing(type='blackmanharris62')
+        yin = essentia.standard.PitchYinFFT()
+        energy = essentia.standard.Energy()
+
+        spectralPeaks = essentia.standard.SpectralPeaks(orderBy =  "magnitude",
+                                                        magnitudeThreshold = 1e-05,
+                                                        minFrequency = 40,
+                                                        maxFrequency = 5000,
+                                                        maxPeaks = 10000)
+
+        hpcp = essentia.standard.HPCP()
 
         features = []
-        ffts = []
+        units = []
 
-        for onsetTime, onset in zip(onsetTimes, onsets):
-            onsetFeatures, onsetFFTs = self.extractFeatures(onset)
+        f = []
 
+        self.x += 1
 
-            # features.append(onsetFeatures)
-            # ffts.append(onsetFFTs)
+        if self.x == 13:
+            print("hello")
 
-            features = features + onsetFeatures
-            ffts = ffts + onsetFFTs
+        # #Manual framecutting is faster than Essentia in Python
+        # for fstart in range(0, len(audio) - self.frameSize, self.hopSize):
+        #     #Get the frame
+        #     frame = audio[fstart:fstart + self.frameSize]
 
-        return features, ffts
+        for frame in essentia.standard.FrameGenerator(audio, frameSize=self.frameSize, hopSize=self.hopSize):
+
+            #FFT and Magnitude Spectrum
+            fft_frame = fft(w(frame))
+            mag = magnitude(fft_frame)
+
+            #Pitch
+            #pitch, pitchConfidence = yin(mag)
+
+            #MFCCs
+            mfcc_bands, mfcc_coeffs = mfcc(mag)
+
+            #Energy
+            e = energy(frame)
+
+            #Key
+            frequencies, magnitudes = spectralPeaks(mag)
+            pcps = hpcp(frequencies, magnitudes)
+            f.append(pcps)
+
+            pool.add("PCPS", pcps)
+
+            #If we are spectral based we need to return the fft frames as units
+            if not onsetBased:
+                units.append(fft_frame)
+
+        if onsetBased:
+            aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean', 'var'])(pool)
+            if "PCPS.mean" in aggrPool.descriptorNames():
+                features = aggrPool["PCPS.mean"]
+            elif "PCPS" in aggrPool.descriptorNames():
+                features = aggrPool["PCPS"][0]
+        else:
+            features = pool["PCPS"]
+
+        return features, units
 
     def analyseFile(self,file, writeOnsets, onsetBased = True):
         """
@@ -271,70 +305,59 @@ class Extractor:
         onsets = []
         fileName = file
 
+        pool = essentia.Pool()
+
+        print("Processing file: " + file)
+
+        #Extract onsets or add the audio as a single onset
         if onsetBased:
+            print("    Onset Detection and Segmentation...")
             onsetTimes, onsets, fileName = self.extractOnsets(file)
         else:
             onsetTimes.append(0.0)
             audio = self.loadAudio(file)
             onsets.append(audio)
 
-        print("Processing file: " + file)
-
+        #Optionally write these onsets out
         if (writeOnsets):
             fileNames = self.writeOnsets(onsets, file)
 
         features = []
-        ffts = []
+        units = []
+
+        print("    Feature Extraction...")
 
         for onsetTime, onset in zip(onsetTimes, onsets):
-            onsetFeatures, onsetFFTs = self.extractFeatures(onset)
+            onsetFeatures, onsetFFTs = self.extractFeatures(onset, onsetBased)
 
-            # features.append(onsetFeatures)
-            # ffts.append(onsetFFTs)
+            features.append(onsetFeatures)
 
-            features = features + onsetFeatures
-            ffts = ffts + onsetFFTs
+            #If it's not onset based then spectra are the units, append
+            if not onsetBased:
+                units = units + onsetFFTs
 
-        return features, ffts
+        if onsetBased:
+            units = onsets
 
-    def analyseFiles(self,listOfFiles):
+        return features, units
+
+    def analyseFiles(self,listOfFiles, onsetBased = True):
         """
         Perform onset detection and extract features from all the onsets from all the files
         :param listOfFiles:
         :return:
         """
         features = []
-        ffts = []
+        units = []
 
         for file in listOfFiles:
-            fileFeatures, fileFFTs = self.analyseFile(file, False, False)
+            fileFeatures, fileUnits = self.analyseFile(file, False, onsetBased)
 
             # features.append(fileFeatures)
             # ffts.append(fileFFTs)
 
-            features = features + fileFeatures
-            ffts = ffts + fileFFTs
+            features += fileFeatures
+            units += fileUnits
 
-        return features, ffts
+        return features, units
 
-    def getListOfWavFiles(self,location):
-        import os.path
-        import glob
-        import fnmatch
-        # determine the files to process
-        files = []
-        files.append(location)
-        for f in files:
-            # check what we have (file/path)
-            if os.path.isdir(f):
-                # use all files in the given path
-                files = glob.glob(f + '/*.wav')
-                files = files + glob.glob(f + '/*.mp3')
-            else:
-                # file was given, append to list
-                files.append(f)
-        # only process .wav files
-        # files = fnmatch.filter(files, '*.wav')
-        files.sort()
-
-        return files
