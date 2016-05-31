@@ -1,43 +1,74 @@
-#!/usr/bin/python
-
-states = ('Healthy', 'Fever')
-observations = ('normal', 'cold', 'dizzy')
-start_probability = {'Healthy': 0.6, 'Fever': 0.4}
-transition_probability = {
-   'Healthy' : {'Healthy': 0.7, 'Fever': 0.3},
-   'Fever' : {'Healthy': 0.4, 'Fever': 0.6}
-   }
-emission_probability = {
-   'Healthy' : {'normal': 0.5, 'cold': 0.4, 'dizzy': 0.1},
-   'Fever' : {'normal': 0.1, 'cold': 0.3, 'dizzy': 0.6}
-   }
+# Most of code from: https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
 
 
 def viterbi(obs, states, start_p, trans_p, emit_p):
     V = [{}]
-    for i in states:
-        V[0][i] = start_p[i]*emit_p[i][obs[0]]
-    # Run Viterbi when t > 0
+    path = {}
+
+    # Initialize base cases (t == 0)
+    for y in states:
+        V[0][y] = start_p[y] * emit_p[y][obs[0]]
+        path[y] = [y]
+
+    # Run Viterbi for t > 0
     for t in range(1, len(obs)):
         V.append({})
+        newpath = {}
+
         for y in states:
-            prob = max(V[t - 1][y0]*trans_p[y0][y]*emit_p[y][obs[t]] for y0 in states)
+            (prob, state) = max((V[t - 1][y0] * trans_p[y0][y] * emit_p[y][obs[t]], y0) for y0 in states)
+
             V[t][y] = prob
-    for i in dptable(V):
-        print i
-    opt = []
-    for j in V:
-      for x, y in j.items():
-        if j[x] == max(j.values()):
-          opt.append(x)
-    # The highest probability
-    h = max(V[-1].values())
-    print 'The steps of states are ' + ' '.join(opt) + ' with highest probability of %s'%h 
+            a = path[state]
+            b = [y]
+            c = a + b
+            newpath[y] = path[state] + [y]
 
-def dptable(V):
-    # Print a table of steps from dictionary
-    yield " ".join(("%10d" % i) for i in range(len(V)))
+        # Don't need to remember the old paths
+        path = newpath
+    n = 0  # if only one element is observed max is sought in the initialization values
+    if len(obs) != 1:
+        n = t
+    # print_dptable(V)
+    (prob, state) = max((V[n][y], y) for y in states)
+    return (prob, path[state])
+
+
+# just prints a table of the steps.
+def print_dptable(V):
+    s = "    " + " ".join(("%7d" % i) for i in range(len(V))) + "\n"
     for y in V[0]:
-        yield "%.7s: " % y+" ".join("%.7s" % ("%f" % v[y]) for v in V)
+        s += "%.5s: " % y
+        s += " ".join("%.7s" % ("%f" % v[y]) for v in V)
+        s += "\n"
+    print(s)
 
-   
+
+def example():
+    return viterbi(observations,
+                   states,
+                   start_probability,
+                   transition_probability,
+                   emission_probability)
+
+
+states = ('Healthy', 'Fever')
+
+observations = ('normal', 'cold', 'dizzy', 'dizzy', 'cold', 'dizzy')
+# observations = ('cold','normal','normal','normal','normal','normal')
+
+print observations
+
+start_probability = {'Healthy': 0.6, 'Fever': 0.4}
+
+transition_probability = {
+    'Healthy': {'Healthy': 0.7, 'Fever': 0.3},
+    'Fever': {'Healthy': 0.4, 'Fever': 0.6}
+}
+
+emission_probability = {
+    'Healthy': {'normal': 0.5, 'cold': 0.4, 'dizzy': 0.1},
+    'Fever': {'normal': 0.1, 'cold': 0.3, 'dizzy': 0.6}
+}
+
+print(example())
