@@ -16,7 +16,7 @@ def viterbi(obs, states, start_p, trans_p, emit_p):
         newpath = {}
 
         for y in states:
-            (prob, state) = max((V[t - 1][y0] * trans_p[y0][y] * emit_p[y][obs[t]], y0) for y0 in states)
+            (prob, state) = max((V[t - 1][y0] * (0.2 * trans_p[y0][y]) * emit_p[y][obs[t]], y0) for y0 in states)
 
             V[t][y] = prob
             a = path[state]

@@ -69,7 +69,7 @@ class Extractor:
     def pad(self, audio, padLength):
         audio
 
-    def concatBeats(self, sequence, units, unitTimes = []):
+    def concatOnsets(self, sequence, units):
         """
 
         :param sequence:
@@ -82,21 +82,9 @@ class Extractor:
         for i, item in enumerate(sequence):
             unit = units[item]
 
-            if len(unitTimes) and i != len(sequence) - 1:
-                timeToNext = unitTimes[i+1] - unitTimes[i]
-                timeToNextInSamples = timeToNext * self.sampleRate
-                timeToNextInSamples = int(timeToNextInSamples)
-
-                if len(units[item]) < timeToNextInSamples:
-                    padWidth = timeToNextInSamples-len(units[item])
-                    unit = np.pad(units[item], (0, padWidth),  mode='constant', constant_values=0)
-                elif len(units[item]) > timeToNextInSamples:
-                    unit = units[item][:timeToNextInSamples]
-
             audio = np.append(audio, unit)
 
         return audio
-
 
 
     def reSynth(self, sequence, ffts):
@@ -341,7 +329,7 @@ class Extractor:
 
         if scale is "spectral":
             for feature in pool.descriptorNames():
-                features += pool[feature]
+                features = np.append(features, [pool[feature]])
         else:
             aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean'])(pool)
 
