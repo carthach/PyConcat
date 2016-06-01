@@ -70,19 +70,19 @@ def main():
 
     #Segment and extract features
     print("Extracting Target")
-    targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, False, "onsets")
+    targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, False, "spectral")
     print("Extracting Corpus")
-    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, "onsets")
+    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, False, "spectral")
 
     #Generate a sequence based on similarity
     print("Generating Sequence")
-    sequence = unitSelection(targetFeatures, corpusFeatures, method="viterbi")
+    sequence = unitSelection(targetFeatures, corpusFeatures, method="kdTree")
 
     #If it's spectral-based used this
-    # audio = extractor.reSynth(sequence, corpusFFTs)
+    audio = extractor.reSynth(sequence, corpusUnits)
 
     #If it's beats based use this
-    audio = extractor.concatOnsets(sequence, corpusUnits)
+    # audio = extractor.concatOnsets(sequence, corpusUnits)
 
     #Write out the audio
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")

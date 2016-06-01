@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.spatial import distance
-from sklearn import preprocessing
 
 def linearSearch(targetFeatures, corpusFeatures):
     """
@@ -9,7 +8,7 @@ def linearSearch(targetFeatures, corpusFeatures):
     :param corpusFeatures:
     :return:
     """
-    from scipy.spatial import distance
+
 
     targetCostMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
     concatenationCostMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
@@ -26,6 +25,9 @@ def kdTree(targetFeatures, corpusFeatures):
     :param corpusFeatures:
     :return:
     """
+
+    from scipy import spatial
+
     tree = spatial.KDTree(corpusFeatures) #Frames
     a, b = tree.query(targetFeatures)
 
@@ -87,6 +89,9 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise=Tru
     :param normalise:
     :return:
     """
+
+    from sklearn import preprocessing
+
     if normalise:
         min_max_scaler = preprocessing.MinMaxScaler()
         targetFeatures = min_max_scaler.fit_transform(targetFeatures)

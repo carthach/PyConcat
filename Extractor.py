@@ -286,11 +286,6 @@ class Extractor:
 
         f = []
 
-        self.x += 1
-
-        if self.x == 13:
-            print("hello")
-
         # #Manual framecutting is faster than Essentia in Python
         # for fstart in range(0, len(audio) - self.frameSize, self.hopSize):
         #     #Get the frame
@@ -318,10 +313,10 @@ class Extractor:
             pcps = hpcp(frequencies, magnitudes)
             f.append(pcps)
 
-            pool.add("energy", e)
+            # pool.add("energy", e)
             pool.add("centroid", c)
-            pool.add("pcps", pcps)
-            pool.add("mfccs", mfcc_coeffs[1])
+            # pool.add("pcps", pcps)
+            # pool.add("mfccs", mfcc_coeffs[1])
 
             #If we are spectral based we need to return the fft frames as units
             if scale is "spectral":
@@ -329,7 +324,7 @@ class Extractor:
 
         if scale is "spectral":
             for feature in pool.descriptorNames():
-                features = np.append(features, [pool[feature]])
+                features = np.append(features, pool[feature])
         else:
             aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean'])(pool)
 
@@ -380,18 +375,19 @@ class Extractor:
         for onsetTime, onset in zip(onsetTimes, onsets):
             onsetFeatures, onsetFFTs = self.extractFeatures(onset, scale)
 
-            features.append(onsetFeatures)
-
             #If it's not onset based then spectra are the units, append
             if scale is "spectral":
                 units = units + onsetFFTs
+                features = features + onsetFeatures
+            else:
+                features.append(onsetFeatures)
 
         if scale is not "spectral":
             units = onsets
 
         return features, units, onsetTimes
 
-    def analyseFiles(self,listOfFiles, scale = "beats"):
+    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "beats"):
         """
         Perform onset detection and extract features from all the onsets from all the files
         :param listOfFiles:
@@ -402,7 +398,7 @@ class Extractor:
         unitTimes = []
 
         for file in listOfFiles:
-            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, False, scale)
+            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, writeOnsets, scale)
 
             # features.append(fileFeatures)
             # ffts.append(fileFFTs)
