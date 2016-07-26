@@ -6,17 +6,16 @@ import matplotlib.pyplot as plt
 import peakutils
 
 class Extractor:
-    x = 0
-    frameSize = 4096
+    frameSize = 2048
     hopSize = frameSize/2
     sampleRate = 44100
 
-    def mySlicer(self, onsetTimes, audio):
+    def slice(self, onsetTimes, audio):
         """
         This can typically be faster than Essentia's slicer
-        :param onsetTimes:
-        :param audio:
-        :return:
+        :param onsetTimes: Vector of onset times for slicing
+        :param audio: Audio signal vector for slicing.
+        :return: Audio segments.
         """
 
         segments = []
@@ -36,35 +35,6 @@ class Extractor:
             segments.append(segment)
 
         return segments
-
-    def synthResynth(self, audio):
-        """
-        Just to test that basic FFT synthesis / resynthesis works
-        :param audio:
-        :return:
-        """
-        fft = essentia.standard.FFT()
-        ifft = essentia.standard.IFFT()
-        w = essentia.standard.Windowing(type = 'hann')
-
-        overlapAdd = essentia.standard.OverlapAdd(frameSize = self.frameSize, hopSize = self.hopSize, gain=1.0/self.frameSize)
-        audio_out = []
-
-        i = 0
-        for fstart in range(0, len(audio) - self.frameSize, self.hopSize):
-            frame = audio[fstart:fstart + self.frameSize]
-            fft_frame = fft(w(frame))
-
-            ifft_frame = ifft(fft_frame)
-            ifft_frame = overlapAdd(ifft_frame)
-
-            audio_out = np.append(audio_out, ifft_frame)
-
-            i = i + 1
-
-        print("Number of frames: " + str(i))
-
-        return audio_out
 
     def pad(self, audio, padLength):
         audio
@@ -197,7 +167,7 @@ class Extractor:
             # slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
             # slices = slicer(audio)
 
-            slices = self.mySlicer(ticks, audio)
+            slices = self.slice(ticks, audio)
 
         return ticks, slices, fileName
 
@@ -221,13 +191,13 @@ class Extractor:
             onsetTimes, onsetRate  = onsetRateResult
             endTimes = onsetTimes[1:]
             d = duration(audio)
-            endTimes = np.append(endTimes, d)
+            endTimes = np.append(endTimes , d)
             endTimes = essentia.array(endTimes)
 
             # slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
             # slices = slicer(audio)
 
-            slices = self.mySlicer(onsetTimes, audio)
+            slices = self.slice(onsetTimes, audio)
 
         return onsetTimes, slices, fileName
 
@@ -313,9 +283,9 @@ class Extractor:
             pcps = hpcp(frequencies, magnitudes)
             f.append(pcps)
 
-            # pool.add("energy", e)
-            pool.add("centroid", c)
-            # pool.add("pcps", pcps)
+            pool.add("energy", e)
+            # pool.add("centroid", c)
+            pool.add("pcps", pcps)
             # pool.add("mfccs", mfcc_coeffs[1])
 
             #If we are spectral based we need to return the fft frames as units
@@ -378,7 +348,7 @@ class Extractor:
             #If it's not onset based then spectra are the units, append
             if scale is "spectral":
                 units = units + onsetFFTs
-                features = features + onsetFeatures
+                features = [onsetFeatures]
             else:
                 features.append(onsetFeatures)
 

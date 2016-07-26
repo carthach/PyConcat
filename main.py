@@ -38,8 +38,9 @@ def plotData(sequence, targetFeatures, corpusFeatures):
 def getCorpus(path):
     """
     Utility tool to return the target and corpus path for a given path
-    :param path:
-    :return:
+    :param path: The path to the corpus
+    :return: targetFile: The path to the target
+    :return: corpusPath: The path to the corpus
     """
     files = os.listdir(path)
 
@@ -55,12 +56,16 @@ def getCorpus(path):
 
     return targetFile, corpusPath
 
-
 def main():
     """
     This shows how to input a folder for concatenative synthesis, segment/analyse then generate a sequence, write and plot
     :return:
     """
+
+    #Settings
+    scale = "spectral"
+    writeOnsets = False
+    unitSelectionMethod = "kdTree"
 
     #Extrapolate the target file and corpus folder and get the list of corpus files
     targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
@@ -68,21 +73,23 @@ def main():
 
     corpusFilenames = extractor.getListOfWavFiles(corpusPath)
 
+
+
     #Segment and extract features
     print("Extracting Target")
-    targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, False, "spectral")
+    targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, writeOnsets, scale)
     print("Extracting Corpus")
-    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, False, "spectral")
+    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, writeOnsets, scale)
 
     #Generate a sequence based on similarity
     print("Generating Sequence")
-    sequence = unitSelection(targetFeatures, corpusFeatures, method="kdTree")
+    sequence = unitSelection(targetFeatures, corpusFeatures, method=unitSelectionMethod)
 
-    #If it's spectral-based used this
-    audio = extractor.reSynth(sequence, corpusUnits)
+    if scale is "spectral":
+        audio = extractor.reSynth(sequence, corpusUnits)
+    else:
+        audio = extractor.concatOnsets(sequence, corpusUnits)
 
-    #If it's beats based use this
-    # audio = extractor.concatOnsets(sequence, corpusUnits)
 
     #Write out the audio
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
