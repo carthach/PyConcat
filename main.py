@@ -74,7 +74,6 @@ def main():
     corpusFilenames = extractor.getListOfWavFiles(corpusPath)
 
 
-
     #Segment and extract features
     print("Extracting Target")
     targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, writeOnsets, scale)

@@ -284,23 +284,28 @@ class Extractor:
             f.append(pcps)
 
             pool.add("energy", e)
-            # pool.add("centroid", c)
-            pool.add("pcps", pcps)
+            pool.add("centroid", c)
+            # pool.add("pcps", pcps)
             # pool.add("mfccs", mfcc_coeffs[1])
 
-            #If we are spectral based we need to return the fft frames as units
+            #If we are spectral based we need to return the fft frames as units and the framewise features
             if scale is "spectral":
                 units.append(fft_frame)
 
-        if scale is "spectral":
-            for feature in pool.descriptorNames():
-                features = np.append(features, pool[feature])
-        else:
+                frameFeatures = []
+                for descriptor in pool.descriptorNames():
+                    frameFeatures = np.append(frameFeatures, (pool[descriptor]))
+
+                features.append(frameFeatures)
+                pool.clear()
+
+
+        #Now we get all the stuff out of the pool
+        if scale is not "spectral":
             aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean'])(pool)
 
             for feature in aggrPool.descriptorNames():
                 if "mean" in feature:
-                    feat = aggrPool[feature]
                     features = np.append(features, aggrPool[feature])
                 else:
                     features += aggrPool[feature][0]
