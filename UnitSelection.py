@@ -11,12 +11,14 @@ def linearSearch(targetFeatures, corpusFeatures):
 
 
     targetCostMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
-    concatenationCostMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
+    # concatenationCostMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
+
+    sequence = []
 
     for targetFeatureIndex, targetFeature in enumerate(targetFeatures[1:]):
-        pass
+        sequence.append(np.argmin(targetCostMatrix[targetFeatureIndex]))
 
-    return 0
+    return sequence
 
 def kdTree(targetFeatures, corpusFeatures):
     """

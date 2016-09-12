@@ -63,9 +63,9 @@ def main():
     """
 
     #Settings
-    scale = "spectral"
+    scale = "onsets"
     writeOnsets = False
-    unitSelectionMethod = "kdTree"
+    unitSelectionMethod = "linearSearch"
 
     #Extrapolate the target file and corpus folder and get the list of corpus files
     targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
