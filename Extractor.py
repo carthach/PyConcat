@@ -234,6 +234,7 @@ class Extractor:
         """
 
         pool = essentia.Pool()
+        medianPool = essentia.Pool()
         mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
         fft = essentia.standard.FFT()
         magnitude = essentia.standard.Magnitude()
@@ -268,7 +269,7 @@ class Extractor:
             mag = magnitude(fft_frame)
 
             #Pitch
-            #pitch, pitchConfidence = yin(mag)
+            pitch, pitchConfidence = yin(mag)
 
             #MFCCs
             mfcc_bands, mfcc_coeffs = mfcc(mag)
@@ -283,11 +284,12 @@ class Extractor:
             pcps = hpcp(frequencies, magnitudes)
             f.append(pcps)
 
-            # pool.add("energy", e)
-            # pool.add("centroid", c)
+            medianPool.add("pitch", pitch)
+            pool.add("energy", e)
 
+            pool.add("centroid", c)
             pool.add("pcps", pcps)
-            # pool.add("mfccs", mfcc_coeffs[1])
+            pool.add("mfccs", mfcc_coeffs)
 
             #If we are spectral based we need to return the fft frames as units and the framewise features
             if scale is "spectral":
@@ -304,12 +306,19 @@ class Extractor:
         #Now we get all the stuff out of the pool
         if scale is not "spectral":
             aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean'])(pool)
+            medianAggrPool = essentia.standard.PoolAggregator(defaultStats=['median'])(medianPool)
 
             for feature in aggrPool.descriptorNames():
                 if "mean" in feature:
                     features = np.append(features, aggrPool[feature])
                 else:
                     features += aggrPool[feature][0]
+
+            for feature in medianAggrPool.descriptorNames():
+                if "median" in feature:
+                    features = np.append(features, medianAggrPool[feature])
+                else:
+                    features += medianAggrPool[feature][0]
 
         return features, units
 

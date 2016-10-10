@@ -81,40 +81,7 @@ def viterbiOld(obs, states):
 
     return path[state]
 
-def viterbi(self, x):
-    ''' Given sequence of emissions, return the most probable path
-        along with its probability. '''
-    x = map(self.smap.get, x)  # turn emission characters into ids
-    nrow, ncol = len(self.Q), len(x)
-    mat = numpy.zeros(shape=(nrow, ncol), dtype=float)  # prob
-    matTb = numpy.zeros(shape=(nrow, ncol), dtype=int)  # backtrace
-    # Fill in first column
-    for i in xrange(0, nrow):
-        mat[i, 0] = self.E[i, x[0]] * self.I[i]
-    # Fill in rest of prob and Tb tables
-    for j in xrange(1, ncol):
-        for i in xrange(0, nrow):
-            ep = self.E[i, x[j]]
-            mx, mxi = mat[0, j - 1] * self.A[0, i] * ep, 0
-            for i2 in xrange(1, nrow):
-                pr = mat[i2, j - 1] * self.A[i2, i] * ep
-                if pr > mx:
-                    mx, mxi = pr, i2
-            mat[i, j], matTb[i, j] = mx, mxi
-    # Find final state with maximal probability
-    omx, omxi = mat[0, ncol - 1], 0
-    for i in xrange(1, nrow):
-        if mat[i, ncol - 1] > omx:
-            omx, omxi = mat[i, ncol - 1], i
-    # Backtrace
-    i, p = omxi, [omxi]
-    for j in xrange(ncol - 1, 0, -1):
-        i = matTb[i, j]
-        p.append(i)
-    p = ''.join(map(lambda x: self.Q[x], p[::-1]))
-    return omx, p  # Return probability and path
-
-def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise=True):
+def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="MinMax"):
     """
     Optionally normalise and use one of the methods to return a sequence of indices
     :param targetFeatures:
@@ -123,13 +90,20 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise=Tru
     :param normalise:
     :return:
     """
-
     from sklearn import preprocessing
 
-    if normalise:
+    if normalise == "MinMax":
         min_max_scaler = preprocessing.MinMaxScaler()
+
         targetFeatures = min_max_scaler.fit_transform(targetFeatures)
         corpusFeatures = min_max_scaler.fit_transform(corpusFeatures)
+    elif normalise == "SD":
+        min_max_scaler = preprocessing.StandardScaler()
+
+        targetFeatures = min_max_scaler.fit_transform(targetFeatures)
+        corpusFeatures = min_max_scaler.fit_transform(corpusFeatures)
+
+    print targetFeatures
 
     if method is "kdTree":
         return kdTree(targetFeatures, corpusFeatures)

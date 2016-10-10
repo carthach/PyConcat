@@ -11,6 +11,9 @@ class MyHMM(object):
         mat = np.zeros(shape=(nrow, ncol), dtype=float)  # prob
         matTb = np.zeros(shape=(nrow, ncol), dtype=int)  # backtrace
 
+        concatenationWeight = 0.5
+        targetWweight = 1.0
+
         # Fill in first column
         for i in xrange(0, nrow):
             mat[i, 0] = self.emissionMatrix[0, i]
@@ -21,15 +24,16 @@ class MyHMM(object):
                 targetCost = self.emissionMatrix[j, i] #Get target cost
                 concatenationCost = self.stateMatrix[i, 0]
 
-                mx, mxi = mat[0, j - 1] + 0.5 * concatenationCost + 1.0 * targetCost, 0
+                mx, mxi = mat[0, j - 1] + (concatenationWeight * concatenationCost) + (targetWweight * targetCost), 0
 
                 for i2 in xrange(1, nrow):
                     concatenationCost = self.stateMatrix[i, i2]
 
-                    if np.abs(i2 - i) == 1:
-                        concatenationCost = 0
+                    #Make adjacent costs 0
+                    # if np.abs(i2 - i) == 1:
+                    #     concatenationCost = 0
 
-                    pr = mat[i2, j-1] + 0.5 * concatenationCost + 1.0 * targetCost
+                    pr = mat[i2, j-1] + (concatenationWeight * concatenationCost) + (targetWweight * targetCost)
 
                     if pr < mx:
                         mx, mxi = pr, i2
@@ -49,12 +53,20 @@ class MyHMM(object):
             i = matTb[i, j]
             p.append(i)
 
+        p = np.flipud(p)
+
+        print p
+
         # return omx, p # Return probability and path
         return p #Just return path
 
     def __init__(self, targetFeatures, corpusFeatures):
-        self.stateMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
         self.emissionMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
+
+        corpusFeatures = corpusFeatures[:,0:2]
+        print corpusFeatures
+        self.stateMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
+
 
         # self.stateMatrix[self.stateMatrix == 0] = 1.0
 

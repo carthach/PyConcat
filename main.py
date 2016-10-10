@@ -67,6 +67,7 @@ def main():
     scale = "onsets"
     writeOnsets = False
     unitSelectionMethod = "Markov"
+    normalMethod = "SD"
 
     #Extrapolate the target file and corpus folder and get the list of corpus files
     targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
@@ -83,7 +84,7 @@ def main():
 
     #Generate a sequence based on similarity
     print("Generating Sequence")
-    sequence = unitSelection(targetFeatures, corpusFeatures, method=unitSelectionMethod)
+    sequence = unitSelection(targetFeatures, corpusFeatures, method=unitSelectionMethod, normalise=normalMethod)
 
     if scale is "spectral":
         audio = extractor.reSynth(sequence, corpusUnits)
