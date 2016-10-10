@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from Extractor import Extractor
 from UnitSelection import *
+import MyHMM as hmm
 
 import os
 
@@ -65,7 +66,7 @@ def main():
     #Settings
     scale = "onsets"
     writeOnsets = False
-    unitSelectionMethod = "linearSearch"
+    unitSelectionMethod = "Markov"
 
     #Extrapolate the target file and corpus folder and get the list of corpus files
     targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")

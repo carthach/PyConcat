@@ -283,9 +283,10 @@ class Extractor:
             pcps = hpcp(frequencies, magnitudes)
             f.append(pcps)
 
-            pool.add("energy", e)
-            pool.add("centroid", c)
-            # pool.add("pcps", pcps)
+            # pool.add("energy", e)
+            # pool.add("centroid", c)
+
+            pool.add("pcps", pcps)
             # pool.add("mfccs", mfcc_coeffs[1])
 
             #If we are spectral based we need to return the fft frames as units and the framewise features
