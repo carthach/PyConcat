@@ -1,5 +1,5 @@
 import numpy as np
-import MyHMM as hmm
+import HMM
 from scipy.spatial import distance
 
 def linearSearch(targetFeatures, corpusFeatures):
@@ -111,6 +111,6 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
         return linearSearch(targetFeatures, corpusFeatures)
     elif method is "Markov":
         # return viterbi(targetFeatures, corpusFeatures)
-        myHMM = hmm.MyHMM(targetFeatures, corpusFeatures)
+        hmm = HMM.HMM(targetFeatures, corpusFeatures)
 
-        return myHMM.viterbi()
+        return hmm.viterbi()

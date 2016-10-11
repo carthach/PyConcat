@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from Extractor import Extractor
 from UnitSelection import *
-import MyHMM as hmm
+import HMM as hmm
 
 import os
 
@@ -75,7 +75,6 @@ def main():
 
     corpusFilenames = extractor.getListOfWavFiles(corpusPath)
 
-
     #Segment and extract features
     print("Extracting Target")
     targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, writeOnsets, scale)
@@ -90,7 +89,6 @@ def main():
         audio = extractor.reSynth(sequence, corpusUnits)
     else:
         audio = extractor.concatOnsets(sequence, corpusUnits)
-
 
     #Write out the audio
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
