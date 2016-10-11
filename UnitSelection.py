@@ -12,10 +12,13 @@ def linearSearch(targetFeatures, corpusFeatures):
     targetCostMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
     # concatenationCostMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
 
-    sequence = []
+    targetCostMatrixIndex = np.argsort(targetCostMatrix)
 
-    for targetFeatureIndex, targetFeature in enumerate(targetFeatures[1:]):
-        sequence.append(np.argmin(targetCostMatrix[targetFeatureIndex]))
+    sequence = targetCostMatrixIndex[:,0]
+
+    #
+    # for targetFeatureIndex, targetFeature in enumerate(targetFeatures[1:]):
+    #     sequence.append(np.argmin(targetCostMatrix[targetFeatureIndex]))
 
     return sequence
 
@@ -92,16 +95,15 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
     """
     from sklearn import preprocessing
 
+    scalar = None
+
     if normalise == "MinMax":
-        min_max_scaler = preprocessing.MinMaxScaler()
-
-        targetFeatures = min_max_scaler.fit_transform(targetFeatures)
-        corpusFeatures = min_max_scaler.fit_transform(corpusFeatures)
+        scalar = preprocessing.MinMaxScaler()
     elif normalise == "SD":
-        min_max_scaler = preprocessing.StandardScaler()
+        scalar = preprocessing.StandardScaler()
 
-        targetFeatures = min_max_scaler.fit_transform(targetFeatures)
-        corpusFeatures = min_max_scaler.fit_transform(corpusFeatures)
+    targetFeatures = scalar.fit_transform(targetFeatures)
+    corpusFeatures = scalar.fit_transform(corpusFeatures)
 
     print targetFeatures
 

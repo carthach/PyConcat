@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial import distance
 
 class HMM(object):
+
     def viterbi(self):
         ''' Given sequence of emissions, return the most probable path
             along with log2 of its probability.  Just like viterbi(...)

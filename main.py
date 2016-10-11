@@ -66,8 +66,8 @@ def main():
     #Settings
     scale = "onsets"
     writeOnsets = False
-    unitSelectionMethod = "Markov"
-    normalMethod = "SD"
+    unitSelectionMethod = "linearSearch"
+    normalMethod = "MinMax"
 
     #Extrapolate the target file and corpus folder and get the list of corpus files
     targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
