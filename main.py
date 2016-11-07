@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from Extractor import Extractor
 from UnitSelection import *
+import pyrubberband as pyrb
 import HMM as hmm
 
 import os
@@ -92,6 +93,10 @@ def main():
 
     #Write out the audio
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
+
+    y_stretch = pyrb.time_stretch(audio, 44100, 2.0)
+
+    extractor.writeAudio(y_stretch, "/Users/carthach/Desktop/stretch.wav")
 
     #Optionally plot data
     #plotData(sequence, targetFeatures, corpusFeatures)
