@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from Extractor import Extractor
 from UnitSelection import *
-import pyrubberband as pyrb
+
 import HMM as hmm
 
 import os
@@ -53,8 +53,10 @@ def getCorpus(path):
         fullFilePath = path + "/" + file
         if fullFilePath.endswith(('.mp3', '.wav')):
             targetFile = fullFilePath
-        if os.path.isdir(fullFilePath):
+        if fullFilePath.endswith("corpus"):
             corpusPath = fullFilePath
+        # if os.path.isdir(fullFilePath):
+        #     corpusPath = fullFilePath
 
     return targetFile, corpusPath
 
@@ -71,8 +73,9 @@ def main():
     normalMethod = "MinMax"
 
     #Extrapolate the target file and corpus folder and get the list of corpus files
-    targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
-    # targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/beatport_test")
+    # targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
+    # targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/beatport_test2")
+    targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/scale_test")
 
     corpusFilenames = extractor.getListOfWavFiles(corpusPath)
 
@@ -89,14 +92,10 @@ def main():
     if scale is "spectral":
         audio = extractor.reSynth(sequence, corpusUnits)
     else:
-        audio = extractor.concatOnsets(sequence, corpusUnits)
+        audio = extractor.concatOnsets(sequence, corpusUnits, targetUnits)
 
     #Write out the audio
     extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
-
-    y_stretch = pyrb.time_stretch(audio, 44100, 2.0)
-
-    extractor.writeAudio(y_stretch, "/Users/carthach/Desktop/stretch.wav")
 
     #Optionally plot data
     #plotData(sequence, targetFeatures, corpusFeatures)

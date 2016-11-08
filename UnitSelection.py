@@ -105,8 +105,6 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
     targetFeatures = scalar.fit_transform(targetFeatures)
     corpusFeatures = scalar.fit_transform(corpusFeatures)
 
-    print targetFeatures
-
     if method is "kdTree":
         return kdTree(targetFeatures, corpusFeatures)
     elif method is "linearSearch":

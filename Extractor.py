@@ -39,7 +39,7 @@ class Extractor:
     def pad(self, audio, padLength):
         audio
 
-    def concatOnsets(self, sequence, units):
+    def concatOnsets(self, sequence, corpusUnits, targetUnits):
         """
 
         :param sequence:
@@ -47,12 +47,20 @@ class Extractor:
         :param unitTimes:
         :return:
         """
+        import pyrubberband as pyrb
+        shouldStretch = True
+
         audio = []
 
         for i, item in enumerate(sequence):
-            unit = units[item]
+            corpusUnit = corpusUnits[item]
 
-            audio = np.append(audio, unit)
+            if shouldStretch:
+                factor = len(corpusUnit) / float(len(targetUnits[i]))
+
+                corpusUnit = pyrb.time_stretch(corpusUnit, 44100, factor)
+
+            audio = np.append(audio, corpusUnit)
 
         return audio
 
@@ -288,6 +296,7 @@ class Extractor:
             pool.add("centroid", c)
             # pool.add("pcps", pcps)
             pool.add("mfccs", mfcc_coeffs[1:])
+            # pool.add("mfccs", mfcc_coeffs)
 
             medianPool.add("pitch", pitch)
 
@@ -305,11 +314,11 @@ class Extractor:
 
         #Now we get all the stuff out of the pool
         if scale is not "spectral":
-            aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean'])(pool)
+            aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean', 'var'])(pool)
             medianAggrPool = essentia.standard.PoolAggregator(defaultStats=['median'])(medianPool)
 
             for feature in aggrPool.descriptorNames():
-                if "mean" in feature:
+                if "mean" or "variance" in feature:
                     features = np.append(features, aggrPool[feature])
                 else:
                     features += aggrPool[feature][0]

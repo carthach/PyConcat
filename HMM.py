@@ -12,8 +12,8 @@ class HMM(object):
         mat = np.zeros(shape=(nrow, ncol), dtype=float)  # prob
         matTb = np.zeros(shape=(nrow, ncol), dtype=int)  # backtrace
 
-        concatenationWeight = 0.5
-        targetWweight = 1.0
+        concatenationWeight = 0.0
+        targetWeight = 1.0
 
         # Fill in first column
         for i in xrange(0, nrow):
@@ -25,7 +25,7 @@ class HMM(object):
                 targetCost = self.emissionMatrix[j, i] #Get target cost
                 concatenationCost = self.stateMatrix[i, 0]
 
-                mx, mxi = mat[0, j - 1] + (concatenationWeight * concatenationCost) + (targetWweight * targetCost), 0
+                mx, mxi = mat[0, j - 1] + (concatenationWeight * concatenationCost) + (targetWeight * targetCost), 0
 
                 for i2 in xrange(1, nrow):
                     concatenationCost = self.stateMatrix[i, i2]
@@ -34,7 +34,7 @@ class HMM(object):
                     # if np.abs(i2 - i) == 1:
                     #     concatenationCost = 0
 
-                    pr = mat[i2, j-1] + (concatenationWeight * concatenationCost) + (targetWweight * targetCost)
+                    pr = mat[i2, j-1] + (concatenationWeight * concatenationCost) + (targetWeight * targetCost)
 
                     if pr < mx:
                         mx, mxi = pr, i2
@@ -56,8 +56,6 @@ class HMM(object):
 
         p = np.flipud(p)
 
-        print p
-
         # return omx, p # Return probability and path
         return p #Just return path
 
@@ -65,7 +63,7 @@ class HMM(object):
         self.emissionMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
 
         corpusFeatures = corpusFeatures[:,0:2]
-        print corpusFeatures
+
         self.stateMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
 
 
