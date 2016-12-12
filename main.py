@@ -68,7 +68,7 @@ def main():
     """
 
     #Settings
-    scale = "onsets"
+    scale = "spectral"
     writeOnsets = False
     unitSelectionMethod = "linearSearch"
     normalMethod = "MinMax"
@@ -92,15 +92,13 @@ def main():
     corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, writeOnsets, scale)
 
 
-    costMatrix = computeCostMatrix(targetFeatures, targetFeatures)
-
-    costMatrix = normalise(costMatrix, "MinMax")
-
-    # costMatrix = np.log(costMatrix)
-
-
-
-    createD3Diagram(costMatrix, outputPath)
+    # For graphing
+    # costMatrix = computeCostMatrix(targetFeatures, targetFeatures)
+    #
+    # costMatrix = normalise(costMatrix, "MinMax")
+    #
+    # # costMatrix = np.log(costMatrix)
+    # createD3Diagram(costMatrix, outputPath)
 
     #Generate a sequence based on similarity
     print("Generating Sequence")
@@ -112,7 +110,7 @@ def main():
         audio = extractor.concatOnsets(sequence, corpusUnits, targetUnits)
 
     #Write out the audio
-    extractor.writeAudio(audio, "/Users/carthach/Desktop/out.wav")
+    extractor.writeAudio(audio, outputPath + "/result.wav")
 
     #Optionally plot data
     #plotData(sequence, targetFeatures, corpusFeatures)

@@ -329,6 +329,7 @@ class Extractor:
                 else:
                     features += medianAggrPool[feature][0]
 
+        #Return features, and if it's spectral return the frames as units
         return features, units
 
     def analyseFile(self,file, writeOnsets, scale = "beats"):
@@ -371,8 +372,8 @@ class Extractor:
 
             #If it's not onset based then spectra are the units, append
             if scale is "spectral":
-                units = units + onsetFFTs
-                features = [onsetFeatures]
+                units += onsetFFTs
+                features += onsetFeatures
             else:
                 features.append(onsetFeatures)
 
