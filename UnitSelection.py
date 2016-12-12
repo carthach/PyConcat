@@ -1,6 +1,12 @@
 import numpy as np
 import HMM
 from scipy.spatial import distance
+from sklearn import preprocessing
+
+def computeCostMatrix(targetFeatures, corpusFeatures):
+    targetCostMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
+
+    return targetCostMatrix
 
 def linearSearch(targetFeatures, corpusFeatures):
     """
@@ -9,7 +15,7 @@ def linearSearch(targetFeatures, corpusFeatures):
     :param corpusFeatures:
     :return:
     """
-    targetCostMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
+    targetCostMatrix = computeCostMatrix(targetFeatures, corpusFeatures)
     # concatenationCostMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
 
     targetCostMatrixIndex = np.argsort(targetCostMatrix)
@@ -84,6 +90,16 @@ def viterbiOld(obs, states):
 
     return path[state]
 
+def normalise(array, method):
+    scalar = None
+
+    if method == "MinMax":
+        scalar = preprocessing.MinMaxScaler()
+    elif method == "SD":
+        scalar = preprocessing.StandardScaler()
+
+    return scalar.fit_transform(array)
+
 def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="MinMax"):
     """
     Optionally normalise and use one of the methods to return a sequence of indices
@@ -93,8 +109,6 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
     :param normalise:
     :return:
     """
-    from sklearn import preprocessing
-
     scalar = None
 
     if normalise == "MinMax":

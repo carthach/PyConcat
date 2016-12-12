@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from Extractor import Extractor
 from UnitSelection import *
+from Graphing import *
 
 import HMM as hmm
 
@@ -72,10 +73,15 @@ def main():
     unitSelectionMethod = "linearSearch"
     normalMethod = "MinMax"
 
+    outputPath = "/Users/carthach/Desktop/concat_out"
+
+    if not os.path.exists(outputPath):
+        os.mkdir(outputPath)
+
     #Extrapolate the target file and corpus folder and get the list of corpus files
-    # targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
+    targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/python_test")
     # targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/beatport_test2")
-    targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/scale_test")
+    # targetFilename, corpusPath = getCorpus("/Users/carthach/Desktop/debug_audio/scale_test")
 
     corpusFilenames = extractor.getListOfWavFiles(corpusPath)
 
@@ -84,6 +90,17 @@ def main():
     targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, writeOnsets, scale)
     print("Extracting Corpus")
     corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, writeOnsets, scale)
+
+
+    costMatrix = computeCostMatrix(targetFeatures, targetFeatures)
+
+    costMatrix = normalise(costMatrix, "MinMax")
+
+    # costMatrix = np.log(costMatrix)
+
+
+
+    createD3Diagram(costMatrix, outputPath)
 
     #Generate a sequence based on similarity
     print("Generating Sequence")
