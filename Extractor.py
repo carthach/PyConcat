@@ -74,7 +74,9 @@ class Extractor:
         """
 
         audio = []
-        ifft = essentia.standard.IFFT()
+
+        ifft = essentia.standard.IFFT(size = self.frameSize)
+
         overlapAdd = essentia.standard.OverlapAdd(frameSize = self.frameSize, hopSize = self.hopSize, gain=1.0/self.frameSize)
 
         i = 0
@@ -294,9 +296,9 @@ class Extractor:
 
             pool.add("energy", e)
             pool.add("centroid", c)
-            # pool.add("pcps", pcps)
-            pool.add("mfccs", mfcc_coeffs[1:])
-            # pool.add("mfccs", mfcc_coeffs)
+            pool.add("pcps", pcps)
+            # pool.add("mfccs", mfcc_coeffs[1:])
+            pool.add("mfccs", mfcc_coeffs)
 
             medianPool.add("pitch", pitch)
 
@@ -308,8 +310,12 @@ class Extractor:
                 for descriptor in pool.descriptorNames():
                     frameFeatures = np.append(frameFeatures, (pool[descriptor]))
 
+                for descriptor in medianPool.descriptorNames():
+                    frameFeatures = np.append(frameFeatures, (medianPool[descriptor]))
+
                 features.append(frameFeatures)
                 pool.clear()
+                medianPool.clear()
 
 
         #Now we get all the stuff out of the pool
