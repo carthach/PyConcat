@@ -8,7 +8,7 @@ import peakutils
 class Extractor:
     frameSize = 2048
     hopSize = frameSize/2
-    sampleRate = 44100
+    sampleRate = 44100.0
 
     def slice(self, onsetTimes, audio):
         """
@@ -21,14 +21,14 @@ class Extractor:
         segments = []
 
         for onsetTimeCounter in range(len(onsetTimes)):
-            startOnsetTimeInSamples = int(onsetTimes[onsetTimeCounter] * 44100.0)
+            startOnsetTimeInSamples = int(onsetTimes[onsetTimeCounter] * self.sampleRate)
 
             endOnsetTimeInSamples = 0
 
             if onsetTimeCounter + 1 == len(onsetTimes):
                 endOnsetTimeInSamples = len(audio)
             else:
-                endOnsetTimeInSamples = int(onsetTimes[onsetTimeCounter + 1] * 44100.0)
+                endOnsetTimeInSamples = int(onsetTimes[onsetTimeCounter + 1] * self.sampleRate)
 
             segment = audio[startOnsetTimeInSamples:endOnsetTimeInSamples]
 
