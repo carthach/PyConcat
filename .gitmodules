@@ -1,0 +1,3 @@
+[submodule "kBestViterbi"]
+	path = kBestViterbi
+	url = https://github.com/carthach/kBestViterbi
