@@ -199,63 +199,79 @@ def main(args):
     unitSelectionMethod = args.method
     normalMethod = args.norm
 
+    #Create the output locations
     outputPath = args.output
-
     if not os.path.exists(outputPath):
         os.mkdir(outputPath)
 
-    #Extrapolate the target file and corpus folder and get the list of corpus files
+    #Extrapolate the target file and corpus folder
     targetFilename, corpusPath = getCorpus(args.input)
 
+    #Get list of corpus files
     corpusFilenames = extractor.getListOfWavFiles(corpusPath)
 
     #Segment and extract features
     print("Extracting Target")
     targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, writeOnsets, scale)
     print("Extracting Corpus")
-    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, writeOnsets, scale)
+    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, writeOnsets, scale=None)
 
-
-    # For graphing
-    # costMatrix = computeCostMatrix(targetFeatures, targetFeatures)
+    # # For graphing
+    # costMatrix = computeDistanceMatrix(targetFeatures, targetFeatures)
     #
     # costMatrix = normalise(costMatrix, "MinMax")
+    #
+    # g = Graph.Adjacency(costMatrix.tolist())
+    #
+    # print costMatrix.toList()
+    #
+    # print(summary(g))
+    #
+    # layout = g.layout("kk")
+    # plot(g, layout=layout, bbox=(300, 300), margin=20)
     #
     # # costMatrix = np.log(costMatrix)
     # createD3Diagram(costMatrix, outputPath)
 
     #Generate a sequence based on similarity
     print("Generating Sequence")
-    sequence = unitSelection(targetFeatures, corpusFeatures, method=unitSelectionMethod, normalise=normalMethod)
 
+    sequence = unitSelection(targetFeatures, corpusFeatures, method="kViterbiParallel", normalise=normalMethod, topK=10)
+
+    #If it's spectral do IFFT resynthesis
     if scale is "spectral":
         audio = extractor.reSynth(sequence, corpusUnits)
     else:
-        audio = extractor.concatOnsets(sequence, corpusUnits, targetUnits)
-
-    #Write out the audio
-    extractor.writeAudio(audio, outputPath + "/result.wav")
+        if isinstance(sequence, list): #If it's using kViterbi it returns a list (maybe should use some wildcard matching for more readability)
+            for i, s in enumerate(sequence):
+                audio = extractor.concatOnsets(s, corpusUnits, targetUnits, shouldStretch=True)
+                extractor.writeAudio(audio, outputPath + "/result_" + str(i) + ".wav")
+        else:
+            audio = extractor.concatOnsets(sequence, corpusUnits, targetUnits, shouldStretch=True)
+            extractor.writeAudio(audio, outputPath + "/result.wav")
 
     #Optionally plot data
     #plotData(sequence, targetFeatures, corpusFeatures)
 
     print "done"
 
+#Debug method when not using from the command line
 def debugArgs():
     class Args:
         pass
 
     args = Args()
 
-    args.scale = "onsets"
+    args.scale = "onsets" #spectral, onsets, beat or None to use the whole file
     args.writeOnsets = False
-    args.method = "kdTree"
-    args.norm = "MinMax"
+    args.method = "kViterbiParallel" #Options are "linearSearch, kdTree, viterbi, kViterbiParallel, kViterbiGraph"
+    args.norm =  "SD"
 
 
     # args.input = "/Users/carthach/Desktop/debug_audio/breaks_pyconcat"
-    args.input = "/Users/carthach/Desktop/debug_audio/beatport_test2"
+    # args.input = "/Users/carthach/Desktop/debug_audio/beatport_test2"
     # args.input = "/Users/carthach/Desktop/debug_audio/scale_test"
+    args.input = "/Users/carthach/Google Drive/Tmp/test_stuff/scale_test"
 
     args.output = "/Users/carthach/Desktop/concat_out"
 
