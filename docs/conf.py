@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # PyConcat documentation build configuration file, created by
-# sphinx-quickstart on Thu May  4 21:47:19 2017.
+# sphinx-quickstart on Fri May  5 00:38:57 2017.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -20,6 +20,13 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../'))
 
+import mock
+ 
+MOCK_MODULES = ['networkx.utils', 'networkx', 'essentia', 'essentia.standard', 'numpy', 'scipy', 'matplotlib', 'matplotlib.pyplot', 'peakutils', 'scipy.spatial', 'scipy.spatial.distance', 'pandas', 'sklearn', 'sklearn.preprocessing']
+# MOCK_MODULES += ['os', 'six', 'subprocess', 'tempfile', 'soundfile', 'networkx', 'heapq', 'time', 'itertools']
+MOCK_MODULES += ['soundfile', 'HMM']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
 
 # -- General configuration ------------------------------------------------
 

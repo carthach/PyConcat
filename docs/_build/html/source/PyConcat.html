@@ -49,11 +49,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="PyConcat.kBestViterbi.html">PyConcat.kBestViterbi package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#module-PyConcat.kBestViterbi.kBestViterbi">PyConcat.kBestViterbi.kBestViterbi module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#pyconcat-kbestviterbi-kbestviterbi-module">PyConcat.kBestViterbi.kBestViterbi module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#module-PyConcat.kBestViterbi.model_tcohn">PyConcat.kBestViterbi.model_tcohn module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#module-PyConcat.kBestViterbi.model_wiki">PyConcat.kBestViterbi.model_wiki module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#module-PyConcat.kBestViterbi.networkx_viterbi">PyConcat.kBestViterbi.networkx_viterbi module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#module-PyConcat.kBestViterbi.simple_paths_with_costs">PyConcat.kBestViterbi.simple_paths_with_costs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#pyconcat-kbestviterbi-networkx-viterbi-module">PyConcat.kBestViterbi.networkx_viterbi module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#pyconcat-kbestviterbi-simple-paths-with-costs-module">PyConcat.kBestViterbi.simple_paths_with_costs module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PyConcat.kBestViterbi.html#module-PyConcat.kBestViterbi">Module contents</a></li>
 </ul>
 </li>
@@ -70,144 +70,8 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-PyConcat.Extractor">
-<span id="pyconcat-extractor-module"></span><h2>PyConcat.Extractor module<a class="headerlink" href="#module-PyConcat.Extractor" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="PyConcat.Extractor.Extractor">
-<em class="property">class </em><code class="descclassname">PyConcat.Extractor.</code><code class="descname">Extractor</code><a class="headerlink" href="#PyConcat.Extractor.Extractor" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="PyConcat.Extractor.Extractor.analyseFile">
-<code class="descname">analyseFile</code><span class="sig-paren">(</span><em>file</em>, <em>writeOnsets</em>, <em>scale='onsets'</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.analyseFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extract onsets from a single file then extract features from all those onsets
-:param file:
-:return:</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.analyseFiles">
-<code class="descname">analyseFiles</code><span class="sig-paren">(</span><em>listOfFiles</em>, <em>writeOnsets=False</em>, <em>scale='onsets'</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.analyseFiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform onset detection and extract features from all the onsets from all the files
-:param listOfFiles:
-:return:</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.concatOnsets">
-<code class="descname">concatOnsets</code><span class="sig-paren">(</span><em>sequence</em>, <em>corpusUnits</em>, <em>targetUnits</em>, <em>shouldStretch=True</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.concatOnsets" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>sequence</strong> &#8211; </li>
-<li><strong>units</strong> &#8211; </li>
-<li><strong>unitTimes</strong> &#8211; </li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.extractBeats">
-<code class="descname">extractBeats</code><span class="sig-paren">(</span><em>fileName</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.extractBeats" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.extractFeatures">
-<code class="descname">extractFeatures</code><span class="sig-paren">(</span><em>audio</em>, <em>scale='beats'</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.extractFeatures" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extract features from an audio vector.
-This tends to be pretty slow for onset based segmentation and retrieval
-:param audio:
-:return:</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.extractOnsets">
-<code class="descname">extractOnsets</code><span class="sig-paren">(</span><em>fileName</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.extractOnsets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extract and return a vector of onsets as audio vectors
-:param file:
-:return:</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="PyConcat.Extractor.Extractor.frameSize">
-<code class="descname">frameSize</code><em class="property"> = 2048</em><a class="headerlink" href="#PyConcat.Extractor.Extractor.frameSize" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.getListOfWavFiles">
-<code class="descname">getListOfWavFiles</code><span class="sig-paren">(</span><em>location</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.getListOfWavFiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get list of wav files (or mp3s) in a folder
-:param location:
-:return:</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="PyConcat.Extractor.Extractor.hopSize">
-<code class="descname">hopSize</code><em class="property"> = 1024</em><a class="headerlink" href="#PyConcat.Extractor.Extractor.hopSize" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="PyConcat.Extractor.Extractor.i">
-<code class="descname">i</code><em class="property"> = 0</em><a class="headerlink" href="#PyConcat.Extractor.Extractor.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.loadAudio">
-<code class="descname">loadAudio</code><span class="sig-paren">(</span><em>fileName</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.loadAudio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load audio from a fileName and return the audio vector
-:param fileName:
-:return:</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.reSynth">
-<code class="descname">reSynth</code><span class="sig-paren">(</span><em>sequence</em>, <em>ffts</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.reSynth" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resynthesise from the ffts, using a sequence of indices
-:param sequence:
-:param ffts:
-:return:</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="PyConcat.Extractor.Extractor.sampleRate">
-<code class="descname">sampleRate</code><em class="property"> = 44100.0</em><a class="headerlink" href="#PyConcat.Extractor.Extractor.sampleRate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.slice">
-<code class="descname">slice</code><span class="sig-paren">(</span><em>onsetTimes</em>, <em>audio</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.slice" title="Permalink to this definition">¶</a></dt>
-<dd><p>This can typically be faster than Essentia&#8217;s slicer
-:param onsetTimes: Vector of onset times for slicing
-:param audio: Audio signal vector for slicing.
-:return: Audio segments.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.writeAudio">
-<code class="descname">writeAudio</code><span class="sig-paren">(</span><em>audio</em>, <em>fileName</em>, <em>shouldWindow=False</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.writeAudio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write a vector of audio to fileName
-:param audio:
-:param fileName:
-:return:</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="PyConcat.Extractor.Extractor.writeOnsets">
-<code class="descname">writeOnsets</code><span class="sig-paren">(</span><em>onsets</em>, <em>fileName</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.Extractor.Extractor.writeOnsets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write all the onsets to fileName_&lt;no&gt;.wav
-:param onsets:
-:param fileName:
-:return:</p>
-</dd></dl>
-
-</dd></dl>
-
+<div class="section" id="pyconcat-extractor-module">
+<h2>PyConcat.Extractor module<a class="headerlink" href="#pyconcat-extractor-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-PyConcat.Graphing">
 <span id="pyconcat-graphing-module"></span><h2>PyConcat.Graphing module<a class="headerlink" href="#module-PyConcat.Graphing" title="Permalink to this headline">¶</a></h2>
@@ -222,100 +86,11 @@ This tends to be pretty slow for onset based segmentation and retrieval
 <dd></dd></dl>
 
 </div>
-<div class="section" id="module-PyConcat.HMM">
-<span id="pyconcat-hmm-module"></span><h2>PyConcat.HMM module<a class="headerlink" href="#module-PyConcat.HMM" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="PyConcat.HMM.HMM">
-<em class="property">class </em><code class="descclassname">PyConcat.HMM.</code><code class="descname">HMM</code><span class="sig-paren">(</span><em>targetFeatures</em>, <em>corpusFeatures</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.HMM.HMM" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="PyConcat.HMM.HMM.viterbi">
-<code class="descname">viterbi</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.HMM.HMM.viterbi" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given sequence of emissions, return the most probable path
-along with log2 of its probability.  Just like viterbi(...)
-but in log2 domain.</p>
-</dd></dl>
-
-</dd></dl>
-
+<div class="section" id="pyconcat-hmm-module">
+<h2>PyConcat.HMM module<a class="headerlink" href="#pyconcat-hmm-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-PyConcat.UnitSelection">
-<span id="pyconcat-unitselection-module"></span><h2>PyConcat.UnitSelection module<a class="headerlink" href="#module-PyConcat.UnitSelection" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="PyConcat.UnitSelection.computeDistanceMatrix">
-<code class="descclassname">PyConcat.UnitSelection.</code><code class="descname">computeDistanceMatrix</code><span class="sig-paren">(</span><em>matrixA</em>, <em>matrixB</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.UnitSelection.computeDistanceMatrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the distance matrix quickly with cdist
-:param matrixA: 
-:param matrixB: 
-:return:</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="PyConcat.UnitSelection.computeDistanceWithWeights">
-<code class="descclassname">PyConcat.UnitSelection.</code><code class="descname">computeDistanceWithWeights</code><span class="sig-paren">(</span><em>targetFeatures</em>, <em>corpusFeatures</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.UnitSelection.computeDistanceWithWeights" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform distance computing with a different set of weights for the target and the corpus
-Need to figure out a more flexible way of doing this    
-:param targetFeatures: 
-:param corpusFeatures: 
-:return:</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="PyConcat.UnitSelection.fixDistanceMatrix">
-<code class="descclassname">PyConcat.UnitSelection.</code><code class="descname">fixDistanceMatrix</code><span class="sig-paren">(</span><em>mat</em>, <em>type='min'</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.UnitSelection.fixDistanceMatrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Replace identical positions in the distance matrix with the max or min distance   
-:param mat: 
-:param type: 
-:return:</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="PyConcat.UnitSelection.kdTree">
-<code class="descclassname">PyConcat.UnitSelection.</code><code class="descname">kdTree</code><span class="sig-paren">(</span><em>targetFeatures</em>, <em>corpusFeatures</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.UnitSelection.kdTree" title="Permalink to this definition">¶</a></dt>
-<dd><p>Faster than linearSearch
-:param targetFeatures:
-:param corpusFeatures:
-:return:</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="PyConcat.UnitSelection.linearSearch">
-<code class="descclassname">PyConcat.UnitSelection.</code><code class="descname">linearSearch</code><span class="sig-paren">(</span><em>targetFeatures</em>, <em>corpusFeatures</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.UnitSelection.linearSearch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Brute force linear search, made a bit easier with python cdist to precompute matrices
-:param targetFeatures:
-:param corpusFeatures:
-:return:</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="PyConcat.UnitSelection.normalise">
-<code class="descclassname">PyConcat.UnitSelection.</code><code class="descname">normalise</code><span class="sig-paren">(</span><em>array</em>, <em>method</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.UnitSelection.normalise" title="Permalink to this definition">¶</a></dt>
-<dd><p>Normalise the arrays using Min/Max or Standard Deviation
-:param array: 
-:param method: 
-:return:</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="PyConcat.UnitSelection.unitSelection">
-<code class="descclassname">PyConcat.UnitSelection.</code><code class="descname">unitSelection</code><span class="sig-paren">(</span><em>targetFeatures</em>, <em>corpusFeatures</em>, <em>method='kdtree'</em>, <em>normalise='MinMax'</em>, <em>topK=30</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.UnitSelection.unitSelection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optionally normalise and use one of the methods to return a sequence of indices
-:param targetFeatures:
-:param corpusFeatures:
-:param method:
-:param normalise:
-:return:</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="PyConcat.UnitSelection.viterbiOld">
-<code class="descclassname">PyConcat.UnitSelection.</code><code class="descname">viterbiOld</code><span class="sig-paren">(</span><em>obs</em>, <em>states</em><span class="sig-paren">)</span><a class="headerlink" href="#PyConcat.UnitSelection.viterbiOld" title="Permalink to this definition">¶</a></dt>
-<dd><p>Modified version of wikipedia viterbi
-:param obs:
-:param states:
-:return:</p>
-</dd></dl>
-
+<div class="section" id="pyconcat-unitselection-module">
+<h2>PyConcat.UnitSelection module<a class="headerlink" href="#pyconcat-unitselection-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-PyConcat">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-PyConcat" title="Permalink to this headline">¶</a></h2>
@@ -333,10 +108,10 @@ Need to figure out a more flexible way of doing this
 <li><a class="reference internal" href="#">PyConcat package</a><ul>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-PyConcat.Extractor">PyConcat.Extractor module</a></li>
+<li><a class="reference internal" href="#pyconcat-extractor-module">PyConcat.Extractor module</a></li>
 <li><a class="reference internal" href="#module-PyConcat.Graphing">PyConcat.Graphing module</a></li>
-<li><a class="reference internal" href="#module-PyConcat.HMM">PyConcat.HMM module</a></li>
-<li><a class="reference internal" href="#module-PyConcat.UnitSelection">PyConcat.UnitSelection module</a></li>
+<li><a class="reference internal" href="#pyconcat-hmm-module">PyConcat.HMM module</a></li>
+<li><a class="reference internal" href="#pyconcat-unitselection-module">PyConcat.UnitSelection module</a></li>
 <li><a class="reference internal" href="#module-PyConcat">Module contents</a></li>
 </ul>
 </li>
