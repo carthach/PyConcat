@@ -5,10 +5,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import peakutils
 
+enableDebug = False
+
 class Extractor:
     frameSize = 2048
     hopSize = frameSize/2
     sampleRate = 44100.0
+
+    i = 0
+
+    def __init__(self):
+        self.debugFile = open("processed_files.csv", 'w')
 
     def slice(self, onsetTimes, audio):
         """
@@ -36,10 +43,7 @@ class Extractor:
 
         return segments
 
-    def pad(self, audio, padLength):
-        audio
-
-    def concatOnsets(self, sequence, corpusUnits, targetUnits):
+    def concatOnsets(self, sequence, corpusUnits, targetUnits, shouldStretch=True):
         """
 
         :param sequence:
@@ -48,16 +52,15 @@ class Extractor:
         :return:
         """
         import pyrubberband as pyrb
-        shouldStretch = True
 
         audio = []
 
         for i, item in enumerate(sequence):
             corpusUnit = corpusUnits[item]
 
+            #Use Rubber Band to stretch the audio to match the target
             if shouldStretch:
                 factor = len(corpusUnit) / float(len(targetUnits[i]))
-
                 corpusUnit = pyrb.time_stretch(corpusUnit, 44100, factor)
 
             audio = np.append(audio, corpusUnit)
@@ -98,7 +101,7 @@ class Extractor:
 
         return audio
 
-    def writeAudio(self, audio, fileName):
+    def writeAudio(self, audio, fileName, shouldWindow=False):
         """
         Write a vector of audio to fileName
         :param audio:
@@ -107,7 +110,14 @@ class Extractor:
         """
         self.writer = essentia.standard.MonoWriter()
         self.writer.configure(filename=fileName)
+
+        #Envelope the output audio using a hamming window
+        if shouldWindow:
+            window = np.hamming(len(audio))
+            audio *= window
+
         audio = essentia.array(audio)
+
         self.writer(audio)
 
     def loadAudio(self, fileName):
@@ -220,18 +230,18 @@ class Extractor:
         """
         import os
 
-        i = 0
         fileNameOnly, fileNameExt = os.path.splitext(fileName)
 
         fileNames = []
 
         for onset in onsets:
-            onsetFilename = fileNameOnly + "_" + str(i) + fileNameExt
+            onsetFilename = fileNameOnly + "_" + str(self.outputFileCounter) + fileNameExt
 
             self.writeAudio(onset, onsetFilename)
 
             fileNames.append(onsetFilename)
-            i = i + 1
+
+            self.outputFileCounter = self.outputFileCounter+1
 
         return fileNames
 
@@ -295,10 +305,10 @@ class Extractor:
             f.append(pcps)
 
             pool.add("energy", e)
-            pool.add("centroid", c)
-            pool.add("pcps", pcps)
-            # pool.add("mfccs", mfcc_coeffs[1:])
-            pool.add("mfccs", mfcc_coeffs)
+            # pool.add("centroid", c)
+            # pool.add("pcps", pcps)
+            pool.add("mfccs", mfcc_coeffs[1:])
+            # pool.add("mfccs", mfcc_coeffs)
 
             medianPool.add("pitch", pitch)
 
@@ -320,7 +330,8 @@ class Extractor:
 
         #Now we get all the stuff out of the pool
         if scale is not "spectral":
-            aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean', 'var'])(pool)
+            # aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean', 'var'])(pool)
+            aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean'])(pool)
             medianAggrPool = essentia.standard.PoolAggregator(defaultStats=['median'])(medianPool)
 
             for feature in aggrPool.descriptorNames():
@@ -338,7 +349,7 @@ class Extractor:
         #Return features, and if it's spectral return the frames as units
         return features, units
 
-    def analyseFile(self,file, writeOnsets, scale = "beats"):
+    def analyseFile(self,file, writeOnsets, scale = "onsets"):
         """
         Extract onsets from a single file then extract features from all those onsets
         :param file:
@@ -352,6 +363,9 @@ class Extractor:
         pool = essentia.Pool()
 
         print("Processing file: " + file)
+
+        if enableDebug:
+            self.debugFile.write(file + "\n")
 
         #Extract onsets or add the audio as a single onset
         print("    Onset Detection and Segmentation...")
@@ -388,7 +402,7 @@ class Extractor:
 
         return features, units, onsetTimes
 
-    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "beats"):
+    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets"):
         """
         Perform onset detection and extract features from all the onsets from all the files
         :param listOfFiles:
@@ -397,6 +411,8 @@ class Extractor:
         features = []
         units = []
         unitTimes = []
+
+        self.outputFileCounter = 0
 
         for file in listOfFiles:
             fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, writeOnsets, scale)
