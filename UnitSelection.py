@@ -1,12 +1,40 @@
 import numpy as np
 import HMM
+import kBestViterbi.kBestViterbi as kb
+import kBestViterbi.networkx_viterbi as kbg
 from scipy.spatial import distance
 from sklearn import preprocessing
+from time import time
 
-def computeCostMatrix(targetFeatures, corpusFeatures):
-    targetCostMatrix = distance.cdist(targetFeatures, corpusFeatures, 'euclidean')
+def fixDistanceMatrix(mat, type="min"):
+    """
+    Replace identical positions in the distance matrix with the max or min distance   
+    :param mat: 
+    :param type: 
+    :return: 
+    """
 
-    return targetCostMatrix
+    if type == "min":
+        mat[mat == 0.0] = np.inf
+        mins = np.amin(mat, axis=1)
+        mat[mat == np.inf] = mins
+    else:
+        mat[mat == 0.0] = np.inf
+        # maxs = np.amax(mat, axis=1)
+        # mat[mat == -np.inf] = maxs
+
+    return mat
+
+def computeDistanceMatrix(matrixA, matrixB):
+    """
+    Compute the distance matrix quickly with cdist
+    :param matrixA: 
+    :param matrixB: 
+    :return: 
+    """
+    costMatrix = distance.cdist(matrixA, matrixB, 'euclidean')
+
+    return costMatrix
 
 def linearSearch(targetFeatures, corpusFeatures):
     """
@@ -15,7 +43,7 @@ def linearSearch(targetFeatures, corpusFeatures):
     :param corpusFeatures:
     :return:
     """
-    targetCostMatrix = computeCostMatrix(targetFeatures, corpusFeatures)
+    targetCostMatrix = computeDistanceMatrix(targetFeatures, corpusFeatures)
     # concatenationCostMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
 
     targetCostMatrixIndex = np.argsort(targetCostMatrix)
@@ -91,6 +119,12 @@ def viterbiOld(obs, states):
     return path[state]
 
 def normalise(array, method):
+    """
+    Normalise the arrays using Min/Max or Standard Deviation
+    :param array: 
+    :param method: 
+    :return: 
+    """
     scalar = None
 
     if method == "MinMax":
@@ -100,7 +134,47 @@ def normalise(array, method):
 
     return scalar.fit_transform(array)
 
-def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="MinMax"):
+
+def computeDistanceWithWeights(targetFeatures, corpusFeatures):
+    """
+    Perform distance computing with a different set of weights for the target and the corpus
+    Need to figure out a more flexible way of doing this    
+    :param targetFeatures: 
+    :param corpusFeatures: 
+    :return: 
+    """
+    energyWeight = 0.25
+    mfccWeight = 0.25 / 12.0
+    pitchWeight = 3.0
+
+    targetFeatures = np.array(targetFeatures)
+    corpusFeaturesWeighted = np.array(corpusFeatures)
+
+    targetFeatures[:, 0] *= energyWeight
+    targetFeatures[:, 1:-1] *= mfccWeight
+    targetFeatures[:, -1] *= pitchWeight
+
+    corpusFeaturesWeighted[:, 0] *= energyWeight
+    corpusFeaturesWeighted[:, 1:-1] *= mfccWeight
+    corpusFeaturesWeighted[:, -1] *= pitchWeight
+
+    b = computeDistanceMatrix(targetFeatures, corpusFeaturesWeighted)
+
+    energyWeight = 0.25
+    mfccWeight = 2.0 / 12.0
+    pitchWeight = 0.25
+
+    corpusFeaturesWeighted = np.array(corpusFeatures)
+
+    corpusFeaturesWeighted[:, 0] *= energyWeight
+    corpusFeaturesWeighted[:, 1:-1] *= mfccWeight
+    corpusFeaturesWeighted[:, -1] *= pitchWeight
+
+    a = computeDistanceMatrix(corpusFeatures, corpusFeatures)
+
+    return a, b
+
+def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="MinMax", topK=30):
     """
     Optionally normalise and use one of the methods to return a sequence of indices
     :param targetFeatures:
@@ -109,22 +183,58 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
     :param normalise:
     :return:
     """
+    print "    Scaling and weighting feature vectors..."
+
     scalar = None
 
     if normalise == "MinMax":
         scalar = preprocessing.MinMaxScaler()
-    elif normalise == "SD":
+    elif normalise == "sd":
         scalar = preprocessing.StandardScaler()
 
-    targetFeatures = scalar.fit_transform(targetFeatures)
-    corpusFeatures = scalar.fit_transform(corpusFeatures)
+    #If we need to perform scaling/normalisation
+    if scalar:
+        # targetFeatures = scalar.fit_transform(targetFeatures)
+        # corpusFeatures = scalar.fit_transform(corpusFeatures)
+
+        #Combine the two feature matrices
+        combinedFeatures = np.concatenate((targetFeatures, corpusFeatures), axis=0)
+
+        #Scale/normalise
+        combinedFeatures = scalar.fit_transform(combinedFeatures)
+
+        #Pop the two scaled matrices
+        targetFeatures = combinedFeatures[:len(targetFeatures), :]
+        corpusFeatures = combinedFeatures[len(targetFeatures):, :]
+
+    #Call this method to compute the weighted a/b matrices for HMM
+    print "    Computing distance matrices..."
+    a, b = computeDistanceWithWeights(targetFeatures, corpusFeatures)
+
+    print "    Performing unit selection..."
+    targetCostWeight = 1.0
+    concatCostWeight = 1.0
 
     if method is "kdTree":
         return kdTree(targetFeatures, corpusFeatures)
     elif method is "linearSearch":
         return linearSearch(targetFeatures, corpusFeatures)
-    elif method is "Markov":
-        # return viterbi(targetFeatures, corpusFeatures)
-        hmm = HMM.HMM(targetFeatures, corpusFeatures)
+    elif method is "viterbi":
+        path, delta, phi, max_prob = kb.viterbiWithCosts(a, b, weights=(targetCostWeight, concatCostWeight))
+        return path
+    elif method is "kViterbiExhaustive":
+        paths = kb.exhaustiveWithCosts(a, b)
+        return paths
+    elif method is "kViterbiParallel":
+        paths, path_probs, delta, phi = kb.kViterbiParallelWithCosts(a, b, topK, weights=(targetCostWeight, concatCostWeight))
+        return paths.tolist()
+    elif method is "kViterbiGraph":
+        a = computeDistanceMatrix(corpusFeatures, corpusFeatures)
+        # a = fixDistanceMatrix(a, type="max")
+        b = computeDistanceMatrix(targetFeatures, corpusFeatures)
 
-        return hmm.viterbi()
+        paths = kbg.kViterbiGraphWithCosts(a, b, topK, weights=(targetCostWeight, concatCostWeight))
+
+        just_paths = [path[0] for path in paths]
+
+        return just_paths
