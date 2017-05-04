@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Extractor module &#8212; PyConcat  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-Extractor">
+<span id="extractor-module"></span><h1>Extractor module<a class="headerlink" href="#module-Extractor" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="Extractor.Extractor">
+<em class="property">class </em><code class="descclassname">Extractor.</code><code class="descname">Extractor</code><a class="headerlink" href="#Extractor.Extractor" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="Extractor.Extractor.analyseFile">
+<code class="descname">analyseFile</code><span class="sig-paren">(</span><em>file</em>, <em>writeOnsets</em>, <em>scale='onsets'</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.analyseFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract onsets from a single file then extract features from all those onsets
+:param file:
+:return:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.analyseFiles">
+<code class="descname">analyseFiles</code><span class="sig-paren">(</span><em>listOfFiles</em>, <em>writeOnsets=False</em>, <em>scale='onsets'</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.analyseFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform onset detection and extract features from all the onsets from all the files
+:param listOfFiles:
+:return:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.concatOnsets">
+<code class="descname">concatOnsets</code><span class="sig-paren">(</span><em>sequence</em>, <em>corpusUnits</em>, <em>targetUnits</em>, <em>shouldStretch=True</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.concatOnsets" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sequence</strong> &#8211; </li>
+<li><strong>units</strong> &#8211; </li>
+<li><strong>unitTimes</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.extractBeats">
+<code class="descname">extractBeats</code><span class="sig-paren">(</span><em>fileName</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.extractBeats" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.extractFeatures">
+<code class="descname">extractFeatures</code><span class="sig-paren">(</span><em>audio</em>, <em>scale='beats'</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.extractFeatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract features from an audio vector.
+This tends to be pretty slow for onset based segmentation and retrieval
+:param audio:
+:return:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.extractOnsets">
+<code class="descname">extractOnsets</code><span class="sig-paren">(</span><em>fileName</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.extractOnsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract and return a vector of onsets as audio vectors
+:param file:
+:return:</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Extractor.Extractor.frameSize">
+<code class="descname">frameSize</code><em class="property"> = 2048</em><a class="headerlink" href="#Extractor.Extractor.frameSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.getListOfWavFiles">
+<code class="descname">getListOfWavFiles</code><span class="sig-paren">(</span><em>location</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.getListOfWavFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of wav files (or mp3s) in a folder
+:param location:
+:return:</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Extractor.Extractor.hopSize">
+<code class="descname">hopSize</code><em class="property"> = 1024</em><a class="headerlink" href="#Extractor.Extractor.hopSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="Extractor.Extractor.i">
+<code class="descname">i</code><em class="property"> = 0</em><a class="headerlink" href="#Extractor.Extractor.i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.loadAudio">
+<code class="descname">loadAudio</code><span class="sig-paren">(</span><em>fileName</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.loadAudio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load audio from a fileName and return the audio vector
+:param fileName:
+:return:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.reSynth">
+<code class="descname">reSynth</code><span class="sig-paren">(</span><em>sequence</em>, <em>ffts</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.reSynth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resynthesise from the ffts, using a sequence of indices
+:param sequence:
+:param ffts:
+:return:</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Extractor.Extractor.sampleRate">
+<code class="descname">sampleRate</code><em class="property"> = 44100.0</em><a class="headerlink" href="#Extractor.Extractor.sampleRate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.slice">
+<code class="descname">slice</code><span class="sig-paren">(</span><em>onsetTimes</em>, <em>audio</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.slice" title="Permalink to this definition">¶</a></dt>
+<dd><p>This can typically be faster than Essentia&#8217;s slicer
+:param onsetTimes: Vector of onset times for slicing
+:param audio: Audio signal vector for slicing.
+:return: Audio segments.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.writeAudio">
+<code class="descname">writeAudio</code><span class="sig-paren">(</span><em>audio</em>, <em>fileName</em>, <em>shouldWindow=False</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.writeAudio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a vector of audio to fileName
+:param audio:
+:param fileName:
+:return:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Extractor.Extractor.writeOnsets">
+<code class="descname">writeOnsets</code><span class="sig-paren">(</span><em>onsets</em>, <em>fileName</em><span class="sig-paren">)</span><a class="headerlink" href="#Extractor.Extractor.writeOnsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write all the onsets to fileName_&lt;no&gt;.wav
+:param onsets:
+:param fileName:
+:return:</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/Extractor.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Cárthach Ó Nuanáin.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="../_sources/source/Extractor.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
