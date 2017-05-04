@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # PyConcat documentation build configuration file, created by
-# sphinx-quickstart on Thu May  4 16:59:01 2017.
+# sphinx-quickstart on Thu May  4 17:30:09 2017.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -16,9 +16,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../../PyConcat'))
+# import os
+# import sys
+# sys.path.insert(0, u'/Users/carthach/Google Drive/Code/PyConcat')
 
 
 # -- General configuration ------------------------------------------------
@@ -30,7 +30,9 @@ sys.path.insert(0, os.path.abspath('../../PyConcat'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc',
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -46,8 +48,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyConcat'
-copyright = u'2017, Cárthach Ó Nuanáin'
-author = u'Cárthach Ó Nuanáin'
+copyright = u'2017, Author'
+author = u'Author'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -63,7 +65,7 @@ release = u''
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -74,7 +76,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = False
+todo_include_todos = True
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -127,7 +129,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PyConcat.tex', u'PyConcat Documentation',
-     u'Cárthach Ó Nuanáin', 'manual'),
+     u'Author', 'manual'),
 ]
 
 
@@ -152,5 +154,26 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
+
+
+# -- Options for Epub output ----------------------------------------------
+
+# Bibliographic Dublin Core info.
+epub_title = project
+epub_author = author
+epub_publisher = author
+epub_copyright = copyright
+
+# The unique identifier of the text. This can be a ISBN number
+# or the project homepage.
+#
+# epub_identifier = ''
+
+# A unique identification for the text.
+#
+# epub_uid = ''
+
+# A list of files that should not be packed into the epub file.
+epub_exclude_files = ['search.html']
 
 
