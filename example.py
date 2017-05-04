@@ -1,13 +1,11 @@
 #!/usr/local/bin/python
-from Extractor import Extractor
-from UnitSelection import *
-from Graphing import *
-
-import HMM as hmm
+from PyConcat import Extractor
+import PyConcat.UnitSelection as unitSelection
+from PyConcat.Graphing import *
 
 import os
 
-extractor = Extractor()
+extractor = Extractor.Extractor()
 
 def plotData(sequence, targetFeatures, corpusFeatures):
     """
@@ -236,7 +234,7 @@ def main(args):
     #Generate a sequence based on similarity
     print("Generating Sequence")
 
-    sequence = unitSelection(targetFeatures, corpusFeatures, method="kViterbiParallel", normalise=normalMethod, topK=10)
+    sequence = unitSelection.unitSelection(targetFeatures, corpusFeatures, method="kViterbiParallel", normalise=normalMethod, topK=10)
 
     #If it's spectral do IFFT resynthesis
     if scale is "spectral":
@@ -264,14 +262,14 @@ def debugArgs():
 
     args.scale = "onsets" #spectral, onsets, beat or None to use the whole file
     args.writeOnsets = False
-    args.method = "kViterbiParallel" #Options are "linearSearch, kdTree, viterbi, kViterbiParallel, kViterbiGraph"
+    args.method = "kdTree" #Options are "linearSearch, kdTree, viterbi, kViterbiParallel, kViterbiGraph"
     args.norm =  "SD"
 
 
     # args.input = "/Users/carthach/Desktop/debug_audio/breaks_pyconcat"
     # args.input = "/Users/carthach/Desktop/debug_audio/beatport_test2"
-    # args.input = "/Users/carthach/Desktop/debug_audio/scale_test"
-    args.input = "/Users/carthach/Google Drive/Tmp/test_stuff/scale_test"
+    args.input = "/Users/carthach/Desktop/debug_audio/scale_test"
+    # args.input = "/Users/carthach/Google Drive/Tmp/test_stuff/scale_test"
 
     args.output = "/Users/carthach/Desktop/concat_out"
 
