@@ -5,8 +5,13 @@ import networkx_viterbi as nxv
 import heapq
 import itertools
 
-#Exhaustive search for verification
 def exhaustiveWithCosts(a, b):
+    """
+    Exhaustive Search for verification of Viterbi tasks but using costs for concatenative synthesis
+    :param a: 2d numpy transition matrix
+    :param b: 2d numpy emission matrix
+    :return: sorted list of hidden state sequences
+    """
     M = len(a)
     S = len(b)
 
@@ -33,6 +38,14 @@ def exhaustiveWithCosts(a, b):
 
 #Exhaustive search for verification
 def exhaustive(pi, A, O, observations):
+    """
+    Exhaustive Search for verification of Viterbi    
+    :param pi: 2d numpy initial probability matrix
+    :param A: 2d numpy transition matrix
+    :param O: 2d numpy emission matrix
+    :param observations: observation sequence
+    :return: the best scoring sequence and a list of all sequences
+    """
     M = len(observations)
     S = pi.shape[0]
 
@@ -56,6 +69,15 @@ def exhaustive(pi, A, O, observations):
 
 #Classic Parallel LVA Decoder using heaps and rankings
 def kViterbiParallelWithCosts(a, b, topK, weights=(1.0, 1.0)):
+    """
+    Parallel List Viterbi Decoding using a rank sorted heaps.
+    This is with costs for concatenative synthesis
+    :param a: 2d numpy transition matrix
+    :param b: 2d numpy emission matrix
+    :param topK: How many best scoring paths we want to return
+    :param weights: array of weights for the targetCost and concatenationCost
+    :return: tuple containing the path, the probabilities, the delta and phi matrices 
+    """
     if topK == 1:
         return ([viterbiWithCosts(a, b, weights)], None, None, None)
 
@@ -176,6 +198,15 @@ def kViterbiParallelWithCosts(a, b, topK, weights=(1.0, 1.0)):
 
 #Classic Parallel LVA Decoder using heaps and rankings
 def kViterbiParallel(pi, a, b, obs, topK):
+    """
+    Parallel List Viterbi Decoding using a rank sorted heaps.
+    :param pi: 2d numpy initial probability matrix
+    :param a: 2d numpy transition matrix
+    :param b: 2d numpy emission matrix
+    :param obs: observation sequence     
+    :param topK: the number of paths we want to return
+    :return: tuple containing the path, the probabilities, the delta and phi matrices 
+    """
     if topK == 1:
         return viterbi(pi, a, b, obs)
 
@@ -295,6 +326,13 @@ def kViterbiParallel(pi, a, b, obs, topK):
 # https://github.com/alexsosn/MarslandMLAlgo/blob/master/Ch16/HMM.py
 
 def viterbiWithCosts(a, b, weights=(1.0, 1.0)):
+    """
+    Viterbi Algorithm with costs for concatenative synthesis
+    :param a: 2d numpy transition matrix
+    :param b: 2d numpy emission matrix
+    :param weights: array of weights for the targetCost and concatenationCost
+    :return: tuple containing the path, the probabilities, the delta and phi matrices 
+    """
     nStates = np.shape(a)[0]
     T = np.shape(b)[0]
 
@@ -346,6 +384,14 @@ def viterbiWithCosts(a, b, weights=(1.0, 1.0)):
 # https://github.com/alexsosn/MarslandMLAlgo/blob/master/Ch16/HMM.py
 
 def viterbi(pi, a, b, obs):
+    """
+    Parallel List Viterbi Decoding using a rank sorted heaps.
+    :param pi: 2d numpy initial probability matrix
+    :param a: 2d numpy transition matrix
+    :param b: 2d numpy emission matrix
+    :param obs: observation sequence     
+    :return: tuple containing the path, the delta, the phi and the probability
+    """
     nStates = np.shape(b)[0]
     T = np.shape(obs)[0]
 

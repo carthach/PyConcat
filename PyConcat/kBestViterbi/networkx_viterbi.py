@@ -6,6 +6,15 @@ import itertools
 
 #Create a NetworkX compatible directed graph that represents a HMM
 def createPrunedViterbiGraphWithCosts(a, b, topK, weights=(1.0, 1.0)):
+    """
+    Return a NetworkX compabitible graph for computing k Best Paths for Viterbi Decoding
+    Uses costs for concatenative synthesis purposes
+    :param a: 2d numpy transition matrix
+    :param b: 2d numpy emission matrix
+    :param topK: the number of paths we want to retain
+    :param weights: the target cost weighting and concatenation cost weighting
+    :return: a Directed Acyclic Graph representing a HMM
+    """
     nObs = len(b)
     nStates = len(a)
 
@@ -71,6 +80,15 @@ def createPrunedViterbiGraphWithCosts(a, b, topK, weights=(1.0, 1.0)):
 
 #Create a NetworkX compatible directed graph that represents a HMM
 def createViterbiGraphWithCosts(a, b, weights=(1.0, 1.0)):
+    """
+    Return a NetworkX compabitible graph for computing k Best Paths for Viterbi Decoding
+    Uses costs for concatenative synthesis purposes
+    :param a: 2d numpy transition matrix
+    :param b: 2d numpy emission matrix
+    :param topK: the number of paths we want to retain
+    :param weights: the target cost weighting and concatenation cost weighting
+    :return: a Directed Acyclic Graph representing a HMM
+    """
     nObs = len(b)
     nStates = len(a)
 
@@ -126,6 +144,14 @@ def createViterbiGraphWithCosts(a, b, weights=(1.0, 1.0)):
 
 #Create a NetworkX compatible directed graph that represents a HMM
 def createViterbiGraph(pi, a, b, obs):
+    """
+    Return a NetworkX compabitible graph for computing k Best Paths for Viterbi Decoding
+    :param pi: 2d numpy initial probability matrix 
+    :param a: 2d numpy transition matrix
+    :param b: 2d numpy emission matrix
+    :param obs: observation sequence
+    :return: a Directed Acyclic Graph representing a HMM
+    """
     nObs = len(obs)
     nStates = len(a)
 
@@ -172,6 +198,13 @@ def createViterbiGraph(pi, a, b, obs):
     return G
 
 def shortestPaths(G, topK, negativeLogSpace = True):
+    """
+    Compute the k Shortest Paths, optionally in negative log space
+    :param G: A directed acyclic graph
+    :param topK: the number pof paths
+    :param negativeLogSpace: use negative log space
+    :return: The paths and their costs
+    """
     if negativeLogSpace:
         for e in G.edges(data=True):
             e[2]["weight"] = np.log(e[2]["weight"])
@@ -200,12 +233,30 @@ def shortestPaths(G, topK, negativeLogSpace = True):
 
 #Use Graph techniques for LVA decoding
 def kViterbiGraph(pi, a, b, obs, topK):
+    """
+    Compute k Best paths using k shortest paths decoding
+    :param pi: the starting probabilities
+    :param a: the transition matrix
+    :param b: the emission matrix
+    :param obs: the observation sequence
+    :param topK: the number of paths to return
+    :return: the paths and their costs
+    """
     G = createViterbiGraph(pi, a, b, obs)
     paths = shortestPaths(G, topK)
 
     return paths
 
 def kViterbiGraphWithCosts(a, b, topK, weights=(1.0, 1.0)):
+    """
+    Compute k Best paths using k shortest paths decoding
+    Uses weighted costs for concatenative synthesis purposes
+    :param a: the transition matrix
+    :param b: the emission matrix    
+    :param topK: the number of paths to return
+    :param weights: target and concatenation weights
+    :return: the paths and their costs
+    """
     G = createViterbiGraphWithCosts(a, b, weights=weights)
     # G = createPrunedViterbiGraphWithCosts(a, b, topK, weights=weights)
 
