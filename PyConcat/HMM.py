@@ -2,11 +2,16 @@ import numpy as np
 from scipy.spatial import distance
 
 class HMM(object):
-
+    """
+    A modified HMM from here:
+    http://www.langmead-lab.org/teaching-materials/
+    """
     def viterbi(self):
-        ''' Given sequence of emissions, return the most probable path
+        """Given sequence of emissions, return the most probable path
             along with log2 of its probability.  Just like viterbi(...)
-            but in log2 domain. '''
+            but in log2 domain.
+        :return: The optimal path
+        """
         nrow, ncol = len(self.stateMatrix), len(self.emissionMatrix)
 
         mat = np.zeros(shape=(nrow, ncol), dtype=float)  # prob
