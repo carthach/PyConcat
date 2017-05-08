@@ -14,8 +14,8 @@ example.py shows an example of how to use it.
 The basic pipeline for performing concatenative synthesis with this tool is as follows: 
 
 1. Segmentation:
- * None, framewise FFTs, onsets, beats
+  * None, framewise FFTs, onsets, beats
 2. Feature Analysis:
- * MFCCs, spectral moments, loudness, f0, HPCPs
+  * MFCCs, spectral moments, loudness, f0, HPCPs
 3. Unit Selection:
- * Brute force linear search, kDTree, Viterbi, k-best Viterbi decoding
+  * Brute force linear search, kDTree, Viterbi, k-best Viterbi decoding
