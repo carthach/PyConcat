@@ -18,10 +18,12 @@ class Extractor:
         self.debugFile = open("processed_files.csv", 'w')
 
     def slice(self, onsetTimes, audio):
-        """
-        This can typically be faster than Essentia's slicer
+        """This can typically be faster than Essentia's slicer
+        
         :param onsetTimes: Vector of onset times for slicing
+        
         :param audio: Audio signal vector for slicing.
+        
         :return: Audio segments.
         """
 
@@ -43,13 +45,21 @@ class Extractor:
 
         return segments
 
-    def concatOnsets(self, sequence, corpusUnits, targetUnits, shouldStretch=True):
-        """
-
-        :param sequence:
-        :param units:
-        :param unitTimes:
-        :return:
+    def concatOnsets(self, sequence, corpusUnits, targetUnits, shouldStretch=True, shouldWindow=False):
+        """Concatenate audio units back to back with optional time stretching to match the target
+        Can also optionally window the audio
+                
+        :param sequence: list of indices into the corpusUnits
+         
+        :param corpusUnits: list of corpus unit audio signals
+         
+        :param targetUnits: list of target unit audio signals
+         
+        :param shouldStretch: stretch the corpus unit to match the target unit
+        
+        :param shouldWindow: apply a window to the signal
+         
+        :return: an audio signal
         """
         import pyrubberband as pyrb
 
@@ -63,17 +73,25 @@ class Extractor:
                 factor = len(corpusUnit) / float(len(targetUnits[i]))
                 corpusUnit = pyrb.time_stretch(corpusUnit, 44100, factor)
 
+            # Envelope the output audio using a hamming window
+            if shouldWindow:
+                window = np.hamming(len(audio))
+                audio *= window
+
+
             audio = np.append(audio, corpusUnit)
 
         return audio
 
 
     def reSynth(self, sequence, ffts):
-        """
-        Resynthesise from the ffts, using a sequence of indices
-        :param sequence:
-        :param ffts:
-        :return:
+        """Resynthesise (using an IFFT) from the ffts, using a sequence of indices
+        
+        :param sequence: list of indices into the array of ffts
+        
+        :param ffts: list of ffts for each corpus unit
+        
+        :return: an audio signal 
         """
 
         audio = []
@@ -101,34 +119,36 @@ class Extractor:
 
         return audio
 
-    def writeAudio(self, audio, fileName, shouldWindow=False):
+    def writeAudio(self, audio, filename):
+        """Write signal to the file system
+        
+        :param audio: audio signal
+         
+        :param fileName: output filename
+        
+        :param shouldWindow: 
+        
+        :return: None 
         """
-        Write a vector of audio to fileName
-        :param audio:
-        :param fileName:
-        :return:
-        """
-        self.writer = essentia.standard.MonoWriter()
-        self.writer.configure(filename=fileName)
 
-        #Envelope the output audio using a hamming window
-        if shouldWindow:
-            window = np.hamming(len(audio))
-            audio *= window
+        self.writer = essentia.standard.MonoWriter()
+        self.writer.configure(filename=filename)
 
         audio = essentia.array(audio)
 
         self.writer(audio)
 
-    def loadAudio(self, fileName):
+    def loadAudio(self, filename):
+        """Load audio from a filename and return the audio vector
+        
+        :param filename: input filename
+        
+        :return: audio signal
         """
-        Load audio from a fileName and return the audio vector
-        :param fileName:
-        :return:
-        """
+
         audio = None
 
-        if fileName:
+        if filename:
             loader = essentia.standard.MonoLoader(filename=fileName)
 
             # and then we actually perform the loading:
@@ -136,18 +156,20 @@ class Extractor:
 
         return audio
 
-    def getListOfWavFiles(self,location):
-        """
-        Get list of wav files (or mp3s) in a folder
-        :param location:
-        :return:
+    def getListOfWavFiles(self, path):
+        """Get list of wav files (or mp3s) in a folder
+        
+        :param path: directory containing soundfiles
+        
+        :return: a list of file names
+        
         """
         import os.path
         import glob
         import fnmatch
         # determine the files to process
         files = []
-        files.append(location)
+        files.append(path)
         for f in files:
             # check what we have (file/path)
             if os.path.isdir(f):
@@ -167,6 +189,17 @@ class Extractor:
     ######################
 
     def extractBeats(self, fileName):
+        """Use a beattracker to return beat locations
+        
+        :param fileName: the file to load and extract beats from
+         
+        :return:
+            ticks: the times in the file
+        
+            slices: the segmented audio units
+        
+            fileName: pass out the filename again
+        """
 
         slices = None
         ticks = None
@@ -192,10 +225,17 @@ class Extractor:
         return ticks, slices, fileName
 
     def extractOnsets(self,fileName):
-        """
-        Extract and return a vector of onsets as audio vectors
-        :param file:
-        :return:
+        """Use an onset detector to return beat locations
+
+        :param fileName: the file to load and extract beats from
+
+        :return: 
+            onsetTimes: the onset times in the file
+
+            slices: the segmented audio units
+
+            fileName: pass out the filename again
+
         """
 
         slices = None
@@ -222,11 +262,13 @@ class Extractor:
         return onsetTimes, slices, fileName
 
     def writeOnsets(self, onsets, fileName):
-        """
-        Write all the onsets to fileName_<no>.wav
-        :param onsets:
-        :param fileName:
-        :return:
+        """Write all the onsets to fileName_<no>.wav
+        
+        :param onsets: a list of audio signals
+        
+        :param fileName: the base filename
+        
+        :return: the list of filenames
         """
         import os
 
@@ -245,12 +287,20 @@ class Extractor:
 
         return fileNames
 
-    def extractFeatures(self,audio, scale = "beats"):
-        """
-        Extract features from an audio vector.
+    def extractFeatures(self,audio, scale="onsets"):
+        """Extract features from an audio vector.
+        
         This tends to be pretty slow for onset based segmentation and retrieval
-        :param audio:
-        :return:
+        
+        :param audio: the audio to extract features from
+        
+        :param scale: the temporal scale we wish to use
+        
+        :return: 
+        
+            features: the list of audio features
+        
+            units: If FFT scale, then the fft frames also  
         """
 
         pool = essentia.Pool()
@@ -350,10 +400,22 @@ class Extractor:
         return features, units
 
     def analyseFile(self,file, writeOnsets, scale = "onsets"):
-        """
-        Extract onsets from a single file then extract features from all those onsets
-        :param file:
+        """Extract onsets from a single file then extract features from all those onsets
+        
+        :param file: the file to analyse
+        
+        :param writeOnsets: whether you want to write the audio onsets to the filesystem
+        
+        :param scale: the temporal scale: None, spectral, onsets, beats
+         
         :return:
+        
+            features : lists of lists of features
+            
+            units : list of audio signals corresponding to units
+            
+            unitTimes: the list of transient times from the audio signals
+            
         """
 
         onsetTimes = []
@@ -403,10 +465,22 @@ class Extractor:
         return features, units, onsetTimes
 
     def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets"):
-        """
-        Perform onset detection and extract features from all the onsets from all the files
-        :param listOfFiles:
+        """Perform segmentation and feature analysis on a list of files
+        
+        :param listOfFiles: list of filenames 
+         
+        :param writeOnsets: whether you want to write the audio onsets to the filesystem
+        
+        :param scale: the temporal scale: None, spectral, onsets, beats
+        
         :return:
+        
+            features : lists of lists of features
+            
+            units : list of audio signals corresponding to units
+            
+            unitTimes: the list of transient times from the audio signals
+            
         """
         features = []
         units = []
