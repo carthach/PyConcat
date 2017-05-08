@@ -13,5 +13,11 @@ example.py shows an example of how to use it.
 
 The basic pipeline for performing concatenative synthesis with this tool is as follows.
 
-1. Make my changes
-  * Make the headings bigger
+1. one
+   * nested
+
+2. two
+   * nested
+
+3. three
+   * nested
