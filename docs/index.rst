@@ -10,6 +10,7 @@ Welcome to PyConcat's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   Reference <http://pyconcat.readthedocs.io/en/latest/source/PyConcat.html>
 
 
 Indices and tables
