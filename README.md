@@ -15,7 +15,7 @@ The basic pipeline for performing concatenative synthesis with this tool is as f
 
 1. Segmentation
    * None, framewise FFTs, onsets, beats
-2. two
+2. Feature Analysis
    * MFCCs, spectral moments, loudness, f0, HPCPs
-3. three
+3. Unit Selection
    * Brute force linear search, kDTree, Viterbi, k-best Viterbi decoding
