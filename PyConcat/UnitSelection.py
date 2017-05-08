@@ -7,11 +7,13 @@ from sklearn import preprocessing
 from time import time
 
 def fixDistanceMatrix(mat, type="min"):
-    """
-    Replace identical positions in the distance matrix with the max or min distance   
-    :param mat: 
-    :param type: 
-    :return: 
+    """Replace identical positions in the distance matrix with the max or min distance
+       
+    :param mat: the matrix to fix
+     
+    :param type: whether you want to replace all values by the min or max
+     
+    :return: the fixed distance matrix
     """
 
     if type == "min":
@@ -26,22 +28,26 @@ def fixDistanceMatrix(mat, type="min"):
     return mat
 
 def computeDistanceMatrix(matrixA, matrixB):
-    """
-    Compute the distance matrix quickly with cdist
-    :param matrixA: 
-    :param matrixB: 
-    :return: 
+    """Compute the distance matrix quickly with cdist
+    
+    :param matrixA: a 2D matrix
+     
+    :param matrixB: a 2D matrix
+     
+    :return: a distance matrix between matrixA and matrixB 
     """
     costMatrix = distance.cdist(matrixA, matrixB, 'euclidean')
 
     return costMatrix
 
 def linearSearch(targetFeatures, corpusFeatures):
-    """
-    Brute force linear search, made a bit easier with python cdist to precompute matrices
+    """Brute force linear search, made a bit easier with python cdist to precompute matrices
+    
     :param targetFeatures:
+    
     :param corpusFeatures:
-    :return:
+    
+    :return: return the best sequence using brute force
     """
     targetCostMatrix = computeDistanceMatrix(targetFeatures, corpusFeatures)
     # concatenationCostMatrix = distance.cdist(corpusFeatures, corpusFeatures, 'euclidean')
@@ -57,11 +63,11 @@ def linearSearch(targetFeatures, corpusFeatures):
     return sequence
 
 def kdTree(targetFeatures, corpusFeatures):
-    """
-    Faster than linearSearch
+    """ Faster than linearSearch
+    
     :param targetFeatures:
     :param corpusFeatures:
-    :return:
+    :return: the best sequence
     """
 
     from scipy import spatial
@@ -72,11 +78,13 @@ def kdTree(targetFeatures, corpusFeatures):
     return b
 
 def viterbiOld(obs, states):
-    """
-    Modified version of wikipedia viterbi
-    :param obs:
-    :param states:
-    :return:
+    """Modified version of Wikipedia Viterbi, adjusted for using costs
+    
+    :param obs: the target features
+    
+    :param states: the corpus features
+    
+    :return: the optimal state sequence
     """
     trans_p = distance.cdist(states, states, 'euclidean')
     trans_p[trans_p == 0.0] = np.inf
@@ -119,11 +127,13 @@ def viterbiOld(obs, states):
     return path[state]
 
 def normalise(array, method):
-    """
-    Normalise the arrays using Min/Max or Standard Deviation
-    :param array: 
-    :param method: 
-    :return: 
+    """Normalise the arrays using Min/Max or Standard Deviation
+    
+    :param array: the array to normalise
+     
+    :param method: to normalise or standardise
+     
+    :return: the normalised array
     """
     scalar = None
 
@@ -136,12 +146,15 @@ def normalise(array, method):
 
 
 def computeDistanceWithWeights(targetFeatures, corpusFeatures):
-    """
-    Perform distance computing with a different set of weights for the target and the corpus
-    Need to figure out a more flexible way of doing this    
-    :param targetFeatures: 
-    :param corpusFeatures: 
-    :return: 
+    """Perform distance computing with a different set of weights for the target and the corpus
+    
+    Need to figure out a more flexible way of doing this.
+        
+    :param targetFeatures:
+     
+    :param corpusFeatures:
+     
+    :return: the weighted distance matrices
     """
     energyWeight = 0.25
     mfccWeight = 0.25 / 12.0
@@ -175,13 +188,19 @@ def computeDistanceWithWeights(targetFeatures, corpusFeatures):
     return a, b
 
 def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="MinMax", topK=30):
-    """
-    Optionally normalise and use one of the methods to return a sequence of indices
+    """Optionally normalise and use one of the methods to return a sequence of indices
+    
     :param targetFeatures:
+    
     :param corpusFeatures:
-    :param method:
-    :param normalise:
-    :return:
+    
+    :param method: linearSearch, kdTree, viterbi, kViterbiExhaustive, kViterbiParallel, kViterbiGraph
+    
+    :param normalise: normalisation method
+    
+    :param topK: the number of paths to return (if using k-Best decoding)
+    
+    :return: the sequence path(s)
     """
     print "    Scaling and weighting feature vectors..."
 
