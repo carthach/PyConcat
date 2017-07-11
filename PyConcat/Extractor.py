@@ -14,7 +14,11 @@ class Extractor:
 
     i = 0
 
-    def __init__(self):
+    def __init__(self, frameSize=2048, hopSize=frameSize/2, sampleRate=44100.0):
+        self.frameSize = frameSize
+        self.hopSize = hopSize
+        self.sampleRate = 44100.0
+
         self.debugFile = open("processed_files.csv", 'w')
 
     def slice(self, onsetTimes, audio):
@@ -149,7 +153,7 @@ class Extractor:
         audio = None
 
         if filename:
-            loader = essentia.standard.MonoLoader(filename=fileName)
+            loader = essentia.standard.MonoLoader(filename=filename)
 
             # and then we actually perform the loading:
             audio = loader()
@@ -287,7 +291,7 @@ class Extractor:
 
         return fileNames
 
-    def extractFeatures(self,audio, scale="onsets"):
+    def extractFeatures(self, audio, scale="onsets", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'MFCC']):
         """Extract features from an audio vector.
         
         This tends to be pretty slow for onset based segmentation and retrieval
@@ -305,22 +309,33 @@ class Extractor:
 
         pool = essentia.Pool()
         medianPool = essentia.Pool()
-        mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
+
+        mfcc = centroid = flatness = energy = pitchYinFFT = spectralPeaks = hpcp = None
+
+        if 'Centroid' in listOfFeatures:
+            centroid = essentia.standard.Centroid(range=self.sampleRate / 2)
+        if 'Flatness' in listOfFeatures:
+            flatness = essentia.standard.Flatness()
+        if 'Loudness' in listOfFeatures:
+            loudness = essentia.standard.Loudness()
+        if 'pitch' in listOfFeatures:
+            loudness = essentia.standard.Loudness()
+            pitchYinFFT = essentia.standard.PitchYinFFT()
+
+
+        if 'MFCC' in listOfFeatures:
+            mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
+        if 'HPCP' in listOfFeatures:
+            spectralPeaks = essentia.standard.SpectralPeaks(orderBy="magnitude",
+                                                            magnitudeThreshold=1e-05,
+                                                            minFrequency=40,
+                                                            maxFrequency=5000,
+                                                            maxPeaks=10000)
+            hpcp = essentia.standard.HPCP()
+
         fft = essentia.standard.FFT()
         magnitude = essentia.standard.Magnitude()
         w = essentia.standard.Windowing(type='blackmanharris62')
-        yin = essentia.standard.PitchYinFFT()
-        energy = essentia.standard.Energy()
-
-        spectralPeaks = essentia.standard.SpectralPeaks(orderBy =  "magnitude",
-                                                        magnitudeThreshold = 1e-05,
-                                                        minFrequency = 40,
-                                                        maxFrequency = 5000,
-                                                        maxPeaks = 10000)
-
-        centroid = essentia.standard.Centroid(range = self.sampleRate/2)
-
-        hpcp = essentia.standard.HPCP()
 
         features = []
         units = []
@@ -338,29 +353,30 @@ class Extractor:
             fft_frame = fft(w(frame))
             mag = magnitude(fft_frame)
 
-            #Pitch
-            pitch, pitchConfidence = yin(mag)
+            if centroid is not None:
+                centroidScalar = centroid(mag)
+                pool.add("centroid", centroidScalar)
+            if flatness is not None:
+                flatnessScalar = flatness(mag)
+                pool.add("flatness", flatnessScalar)
+            if loudness is not None:
+                loudnessScalar = loudness(frame)
+                pool.add("loudness", loudnessScalar)
+            if pitchYinFFT is not None:
+                pitchScalar, pitchConfidenceScalar = pitchYinFFT(mag)
+                # pool.add("pitch", pitchScalar)
+                medianPool.add("pitch", pitchScalar)
 
-            #MFCCs
-            mfcc_bands, mfcc_coeffs = mfcc(mag)
+            if mfcc is not None:
+                mfcc_bands, mfccVector = mfcc(mag)
+                pool.add("mfccs", mfccVector[1:])
+            if hpcp is not None:
+                frequencies, magnitudes = spectralPeaks(mag)
+                hpcpVector = hpcp(frequencies, magnitudes)
 
-            #Energy
-            e = energy(frame)
+                pool.add("pcps", hpcpVector)
 
-            c = centroid(mag)
-
-            #Key
-            frequencies, magnitudes = spectralPeaks(mag)
-            pcps = hpcp(frequencies, magnitudes)
-            f.append(pcps)
-
-            pool.add("energy", e)
-            # pool.add("centroid", c)
-            # pool.add("pcps", pcps)
-            pool.add("mfccs", mfcc_coeffs[1:])
-            # pool.add("mfccs", mfcc_coeffs)
-
-            medianPool.add("pitch", pitch)
+                f.append(hpcpVector)
 
             #If we are spectral based we need to return the fft frames as units and the framewise features
             if scale is "spectral":

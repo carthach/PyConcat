@@ -5,8 +5,6 @@ from PyConcat.Graphing import *
 
 import os
 
-extractor = Extractor.Extractor()
-
 def plotData(sequence, targetFeatures, corpusFeatures):
     """
     Plot a comparison of the sequence versus the original target based on a feature
@@ -190,6 +188,8 @@ def main(args):
     :return:
     """
     import argparse
+
+    extractor = Extractor.Extractor()
 
     #Settings
     scale = args.scale
