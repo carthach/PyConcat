@@ -49,7 +49,7 @@ class Extractor:
 
         return segments
 
-    def concatOnsets(self, sequence, corpusUnits, targetUnits, shouldStretch=True, shouldWindow=False):
+    def concatOnsets(self, sequence, corpusUnits, targetUnits, shouldStretch=False, shouldWindow=False):
         """Concatenate audio units back to back with optional time stretching to match the target
         Can also optionally window the audio
                 
@@ -291,7 +291,7 @@ class Extractor:
 
         return fileNames
 
-    def extractFeatures(self, audio, scale="onsets", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'MFCC']):
+    def extractFeatures(self, audio, scale="onsets", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'BFCC']):
         """Extract features from an audio vector.
         
         This tends to be pretty slow for onset based segmentation and retrieval
@@ -310,7 +310,8 @@ class Extractor:
         pool = essentia.Pool()
         medianPool = essentia.Pool()
 
-        mfcc = centroid = flatness = energy = pitchYinFFT = spectralPeaks = hpcp = None
+        centroid = flatness = energy = pitchYinFFT = None
+        bfcc = mfcc = spectralPeaks = hpcp = None
 
         if 'Centroid' in listOfFeatures:
             centroid = essentia.standard.Centroid(range=self.sampleRate / 2)
@@ -318,11 +319,13 @@ class Extractor:
             flatness = essentia.standard.Flatness()
         if 'Loudness' in listOfFeatures:
             loudness = essentia.standard.Loudness()
-        if 'pitch' in listOfFeatures:
+        if 'Pitch' in listOfFeatures:
             loudness = essentia.standard.Loudness()
             pitchYinFFT = essentia.standard.PitchYinFFT()
 
 
+        if 'BFCC' in listOfFeatures:
+            bfcc = essentia.standard.BFCC(inputSize = self.frameSize/2+1)
         if 'MFCC' in listOfFeatures:
             mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
         if 'HPCP' in listOfFeatures:
@@ -355,39 +358,57 @@ class Extractor:
 
             if centroid is not None:
                 centroidScalar = centroid(mag)
-                pool.add("centroid", centroidScalar)
+                pool.add("Centroid", centroidScalar)
             if flatness is not None:
                 flatnessScalar = flatness(mag)
-                pool.add("flatness", flatnessScalar)
+                pool.add("Flatness", flatnessScalar)
             if loudness is not None:
                 loudnessScalar = loudness(frame)
-                pool.add("loudness", loudnessScalar)
+                pool.add("Loudness", loudnessScalar)
             if pitchYinFFT is not None:
                 pitchScalar, pitchConfidenceScalar = pitchYinFFT(mag)
                 # pool.add("pitch", pitchScalar)
-                medianPool.add("pitch", pitchScalar)
+                medianPool.add("Pitch", pitchScalar)
 
+            import time
+
+            startTime = time.time()
+
+            if bfcc is not None:
+                bfcc_bands, bfccVector = bfcc(mag)
+                pool.add("BFCC", bfccVector[1:])
             if mfcc is not None:
                 mfcc_bands, mfccVector = mfcc(mag)
-                pool.add("mfccs", mfccVector[1:])
+                pool.add("MFCC", mfccVector[1:])
             if hpcp is not None:
                 frequencies, magnitudes = spectralPeaks(mag)
                 hpcpVector = hpcp(frequencies, magnitudes)
 
-                pool.add("pcps", hpcpVector)
+                pool.add("HPCP", hpcpVector)
 
                 f.append(hpcpVector)
+
+            elapsedTime = time.time() - startTime
+
+            x = pool.descriptorNames()
 
             #If we are spectral based we need to return the fft frames as units and the framewise features
             if scale is "spectral":
                 units.append(fft_frame)
 
                 frameFeatures = []
-                for descriptor in pool.descriptorNames():
-                    frameFeatures = np.append(frameFeatures, (pool[descriptor]))
 
-                for descriptor in medianPool.descriptorNames():
-                    frameFeatures = np.append(frameFeatures, (medianPool[descriptor]))
+                """
+                We do it this roundabout way to retain the order that user wants in listOfFeatures
+                """
+                for feature in listOfFeatures:
+                    for descriptor in pool.descriptorNames():
+                        if feature in descriptor:
+                            frameFeatures = np.append(frameFeatures, (pool[descriptor]))
+
+                    for descriptor in medianPool.descriptorNames():
+                        if feature in descriptor:
+                            frameFeatures = np.append(frameFeatures, (medianPool[descriptor]))
 
                 features.append(frameFeatures)
                 pool.clear()
@@ -400,17 +421,24 @@ class Extractor:
             aggrPool = essentia.standard.PoolAggregator(defaultStats=['mean'])(pool)
             medianAggrPool = essentia.standard.PoolAggregator(defaultStats=['median'])(medianPool)
 
-            for feature in aggrPool.descriptorNames():
-                if "mean" or "variance" in feature:
-                    features = np.append(features, aggrPool[feature])
-                else:
-                    features += aggrPool[feature][0]
+            """
+            We do it this roundabout way to retain the order that user wants in listOfFeatures
+            """
+            for feature in listOfFeatures:
+                for aggrFeature in aggrPool.descriptorNames():
+                    if feature in aggrFeature:
+                        if "mean" or "variance" in feature:
+                            features = np.append(features, aggrPool[aggrFeature])
+                        else:
+                            features += aggrPool[aggrFeature][0]
 
-            for feature in medianAggrPool.descriptorNames():
-                if "median" in feature:
-                    features = np.append(features, medianAggrPool[feature])
-                else:
-                    features += medianAggrPool[feature][0]
+                #Median based features (i.e. pitch)
+                for medianFeature in medianAggrPool.descriptorNames():
+                    if feature in medianFeature:
+                        if "median" in medianFeature:
+                            features = np.append(features, medianAggrPool[medianFeature])
+                        else:
+                            features += medianAggrPool[medianFeature][0]
 
         #Return features, and if it's spectral return the frames as units
         return features, units

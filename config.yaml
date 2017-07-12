@@ -1,0 +1,5 @@
+timeScale : 'onsets'
+writeOnsets : False
+unitSelection : 'kdTree'
+normalisation : 'MinMax'
+stretchUnits : True
