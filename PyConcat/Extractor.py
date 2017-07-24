@@ -475,9 +475,9 @@ class Extractor:
 
         #Extract onsets or add the audio as a single onset
         print("    Onset Detection and Segmentation...")
-        if scale is "beats":
+        if scale == "beats":
             onsetTimes, onsets, fileName = self.extractBeats(file)
-        elif scale is "onsets":
+        elif scale =="onsets":
             onsetTimes, onsets, fileName = self.extractOnsets(file)
         else:
             onsetTimes.append(0.0)
