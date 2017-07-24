@@ -236,6 +236,7 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
     targetCostWeight = 1.0
     concatCostWeight = 1.0
 
+    #Return the results of the chosen unit selection
     if method == "kdTree":
         return kdTree(targetFeatures, corpusFeatures)
     elif method == "linearSearch":

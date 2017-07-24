@@ -49,7 +49,7 @@ class Extractor:
 
         return segments
 
-    def concatOnsets(self, sequence, corpusUnits, targetUnits, shouldStretch=False, shouldWindow=False):
+    def concatOnsets(self, sequence, corpusUnits, targetUnits, stretchUnits=False, windowUnits=False):
         """Concatenate audio units back to back with optional time stretching to match the target
         Can also optionally window the audio
                 
@@ -73,12 +73,12 @@ class Extractor:
             corpusUnit = corpusUnits[item]
 
             #Use Rubber Band to stretch the audio to match the target
-            if shouldStretch:
+            if stretchUnits:
                 factor = len(corpusUnit) / float(len(targetUnits[i]))
                 corpusUnit = pyrb.time_stretch(corpusUnit, 44100, factor)
 
             # Envelope the output audio using a hamming window
-            if shouldWindow:
+            if windowUnits:
                 window = np.hamming(len(audio))
                 audio *= window
 
@@ -440,10 +440,12 @@ class Extractor:
                         else:
                             features += medianAggrPool[medianFeature][0]
 
-        #Return features, and if it's spectral return the frames as units
-        return features, units
+            aggrPool.merge(medianAggrPool)
 
-    def analyseFile(self,file, writeOnsets, scale = "onsets"):
+        #Return features, and if it's spectral return the frames as units
+        return features, units, pool
+
+    def analyseFile(self,file, writeOnsets, scale = "onsets", yamlOutputFile=""):
         """Extract onsets from a single file then extract features from all those onsets
         
         :param file: the file to analyse
@@ -466,7 +468,7 @@ class Extractor:
         onsets = []
         fileName = file
 
-        pool = essentia.Pool()
+        filePool = essentia.Pool()
 
         print("Processing file: " + file)
 
@@ -494,7 +496,7 @@ class Extractor:
         print("    Feature Extraction...")
 
         for onsetTime, onset in zip(onsetTimes, onsets):
-            onsetFeatures, onsetFFTs = self.extractFeatures(onset, scale)
+            onsetFeatures, onsetFFTs, onsetPool = self.extractFeatures(onset, scale)
 
             #If it's not onset based then spectra are the units, append
             if scale is "spectral":
@@ -503,12 +505,18 @@ class Extractor:
             else:
                 features.append(onsetFeatures)
 
+            onsetPool.add("onsetTimes", onsetTime)
+            filePool.merge(onsetPool, "append")
+
         if scale is not "spectral":
             units = onsets
 
+        if yamlOutputFile != "":
+            essentia.standard.YamlOutput(filename=yamlOutputFile)(filePool)
+
         return features, units, onsetTimes
 
-    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets"):
+    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets", yamlOutputFolder=""):
         """Perform segmentation and feature analysis on a list of files
         
         :param listOfFiles: list of filenames 
@@ -533,7 +541,14 @@ class Extractor:
         self.outputFileCounter = 0
 
         for file in listOfFiles:
-            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, writeOnsets, scale)
+
+            yamlOutputFile = ""
+            if yamlOutputFolder != "":
+                import os
+                baseFilename = os.path.splitext(os.path.basename(file))[0]
+                yamlOutputFile = yamlOutputFolder + "/" + baseFilename + ".yaml"
+
+            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, writeOnsets, scale, yamlOutputFile=yamlOutputFile)
 
             # features.append(fileFeatures)
             # ffts.append(fileFFTs)
