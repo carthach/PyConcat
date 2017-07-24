@@ -236,20 +236,20 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
     targetCostWeight = 1.0
     concatCostWeight = 1.0
 
-    if method is "kdTree":
+    if method == "kdTree":
         return kdTree(targetFeatures, corpusFeatures)
-    elif method is "linearSearch":
+    elif method == "linearSearch":
         return linearSearch(targetFeatures, corpusFeatures)
-    elif method is "viterbi":
+    elif method == "viterbi":
         path, delta, phi, max_prob = kb.viterbiWithCosts(a, b, weights=(targetCostWeight, concatCostWeight))
         return path
-    elif method is "kViterbiExhaustive":
+    elif method == "kViterbiExhaustive":
         paths = kb.exhaustiveWithCosts(a, b)
         return paths
-    elif method is "kViterbiParallel":
+    elif method == "kViterbiParallel":
         paths, path_probs, delta, phi = kb.kViterbiParallelWithCosts(a, b, topK, weights=(targetCostWeight, concatCostWeight))
         return paths.tolist()
-    elif method is "kViterbiGraph":
+    elif method == "kViterbiGraph":
         a = computeDistanceMatrix(corpusFeatures, corpusFeatures)
         # a = fixDistanceMatrix(a, type="max")
         b = computeDistanceMatrix(targetFeatures, corpusFeatures)
