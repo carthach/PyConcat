@@ -160,35 +160,29 @@ class Extractor:
 
         return audio
 
-    def getListOfWavFiles(self, path):
+    def getListOfFiles(path, filterPattern=""):
         """Get list of wav files (or mp3s) in a folder
-        
+
         :param path: directory containing soundfiles
-        
+
         :return: a list of file names
-        
+
         """
-        import os.path
         import glob
         import fnmatch
-        # determine the files to process
+
         files = []
-        files.append(path)
-        for f in files:
+
+        for f in path:
             # check what we have (file/path)
             if os.path.isdir(f):
                 # use all files in the given path
-                files = glob.glob(f + '/*.wav')
-                files = files + glob.glob(f + '/*.mp3')
+                files = glob.glob(f + '/' + filterPattern)
             else:
                 # file was given, append to list
                 files.append(f)
-        # only process .wav files
-        # files = fnmatch.filter(files, '*.wav')
-        files.sort()
 
         return files
-
 
     ######################
 
