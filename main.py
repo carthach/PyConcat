@@ -132,7 +132,7 @@ def main(args):
     print("Extracting Target")
     targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, writeOnsets, scale=timeScale)
     print("Extracting Corpus")
-    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, writeOnsets, scale=timeScale)
+    corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, writeOnsets, scale=timeScale, yamlOutputFolder=outputPath)
 
     # # For graphing
     # costMatrix = computeDistanceMatrix(targetFeatures, targetFeatures)
@@ -157,7 +157,7 @@ def main(args):
     sequence = unitSelection.unitSelection(targetFeatures, corpusFeatures, method=unitSelectionMethod, normalise=normalMethod, topK=10)
 
     #If it's spectral do IFFT resynthesis
-    if scale is "spectral":
+    if timeScale is "spectral":
         audio = extractor.reSynth(sequence, corpusUnits)
     else:
         if isinstance(sequence, list): #If it's using kViterbi it returns a list (maybe should use some wildcard matching for more readability)
