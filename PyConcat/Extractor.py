@@ -349,7 +349,7 @@ class Extractor:
         pool = essentia.Pool()
         medianPool = essentia.Pool()
 
-        centroid = flatness = energy = pitchYinFFT = None
+        centroid = flatness = loudness = pitchYinFFT = None
         bfcc = mfcc = spectralPeaks = hpcp = None
 
         if 'Centroid' in listOfFeatures:
@@ -484,7 +484,7 @@ class Extractor:
         #Return features, and if it's spectral return the frames as units
         return features, units, pool
 
-    def analyseFile(self,file, writeOnsets, scale = "onsets", yamlOutputFile="", onsetDetection=""):
+    def analyseFile(self,file, writeOnsets, scale = "onsets", yamlOutputFile="", onsetDetection="", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'BFCC']):
         """Extract onsets from a single file then extract features from all those onsets
         
         :param file: the file to analyse
@@ -538,7 +538,7 @@ class Extractor:
         print("    Feature Extraction...")
 
         for onsetTime, onset in zip(onsetTimes, onsets):
-            onsetFeatures, onsetFFTs, onsetPool = self.extractFeatures(onset, scale)
+            onsetFeatures, onsetFFTs, onsetPool = self.extractFeatures(onset, scale, listOfFeatures=listOfFeatures)
 
             #If it's not onset based then spectra are the units, append
             if scale is "spectral":
@@ -558,7 +558,7 @@ class Extractor:
 
         return features, units, onsetTimes
 
-    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets", yamlOutputFolder="", onsetDetection=""):
+    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets", yamlOutputFolder="", onsetDetection="", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'BFCC']):
         """Perform segmentation and feature analysis on a list of files
         
         :param listOfFiles: list of filenames 
@@ -590,7 +590,7 @@ class Extractor:
                 baseFilename = os.path.splitext(os.path.basename(file))[0]
                 yamlOutputFile = yamlOutputFolder + "/" + baseFilename + ".yaml"
 
-            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, writeOnsets, scale, yamlOutputFile=yamlOutputFile, onsetDetection=onsetDetection)
+            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, writeOnsets, scale, yamlOutputFile=yamlOutputFile, onsetDetection=onsetDetection, listOfFeatures=listOfFeatures)
 
             # features.append(fileFeatures)
             # ffts.append(fileFFTs)
