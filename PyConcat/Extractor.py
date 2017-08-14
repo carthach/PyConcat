@@ -4,6 +4,10 @@ import essentia.standard
 import numpy as np
 import matplotlib.pyplot as plt
 import peakutils
+import glob
+import fnmatch
+import os
+import madmom
 
 enableDebug = False
 
@@ -160,7 +164,7 @@ class Extractor:
 
         return audio
 
-    def getListOfFiles(path, filterPattern=""):
+    def getListOfFiles(self, path, filterPattern=""):
         """Get list of wav files (or mp3s) in a folder
 
         :param path: directory containing soundfiles
@@ -168,10 +172,10 @@ class Extractor:
         :return: a list of file names
 
         """
-        import glob
-        import fnmatch
-
         files = []
+
+        if type(path) is not list:
+            path = [path]
 
         for f in path:
             # check what we have (file/path)
@@ -222,6 +226,47 @@ class Extractor:
 
         return ticks, slices, fileName
 
+    def extractOnsetsMadMom(self, filename):
+        """Use an onset detector to return beat locations
+
+        :param fileName: the file to load and extract beats from
+
+        :return:
+            onsetTimes: the onset times in the file
+
+            slices: the segmented audio units
+
+            fileName: pass out the filename again
+
+        """
+
+        slices = None
+        onsetTimes = None
+
+        onsetRate = essentia.standard.OnsetRate()
+        duration = essentia.standard.Duration()
+
+        if filename:
+            audio = self.loadAudio(filename)
+
+            act = madmom.features.onsets.CNNOnsetProcessor()
+            onsetFunction = act(filename)
+
+            proc = madmom.features.onsets.OnsetPeakPickingProcessor(fps=100)
+            onsetTimes = proc(onsetFunction)
+
+            endTimes = onsetTimes[1:]
+            d = duration(audio)
+            endTimes = np.append(endTimes , d)
+            endTimes = essentia.array(endTimes)
+
+            # slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
+            # slices = slicer(audio)
+
+            slices = self.slice(onsetTimes, audio)
+
+        return onsetTimes, slices, filename
+
     def extractOnsets(self,fileName):
         """Use an onset detector to return beat locations
 
@@ -257,7 +302,7 @@ class Extractor:
 
             slices = self.slice(onsetTimes, audio)
 
-        return onsetTimes, slices, fileName
+        return onsetTimes, slices, filename
 
     def writeOnsets(self, onsets, fileName):
         """Write all the onsets to fileName_<no>.wav
@@ -439,7 +484,7 @@ class Extractor:
         #Return features, and if it's spectral return the frames as units
         return features, units, pool
 
-    def analyseFile(self,file, writeOnsets, scale = "onsets", yamlOutputFile=""):
+    def analyseFile(self,file, writeOnsets, scale = "onsets", yamlOutputFile="", onsetDetection=""):
         """Extract onsets from a single file then extract features from all those onsets
         
         :param file: the file to analyse
@@ -473,8 +518,11 @@ class Extractor:
         print("    Onset Detection and Segmentation...")
         if scale == "beats":
             onsetTimes, onsets, fileName = self.extractBeats(file)
-        elif scale =="onsets":
-            onsetTimes, onsets, fileName = self.extractOnsets(file)
+        elif scale == "onsets":
+            if onsetDetection == "MadMomCNN":
+                onsetTimes, onsets, filename = self.extractOnsetsMadMom(file)
+            else:
+                onsetTimes, onsets, fileName = self.extractOnsets(file)
         else:
             onsetTimes.append(0.0)
             audio = self.loadAudio(file)
@@ -510,7 +558,7 @@ class Extractor:
 
         return features, units, onsetTimes
 
-    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets", yamlOutputFolder=""):
+    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets", yamlOutputFolder="", onsetDetection=""):
         """Perform segmentation and feature analysis on a list of files
         
         :param listOfFiles: list of filenames 
@@ -542,7 +590,7 @@ class Extractor:
                 baseFilename = os.path.splitext(os.path.basename(file))[0]
                 yamlOutputFile = yamlOutputFolder + "/" + baseFilename + ".yaml"
 
-            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, writeOnsets, scale, yamlOutputFile=yamlOutputFile)
+            fileFeatures, fileUnits, fileUnitTimes = self.analyseFile(file, writeOnsets, scale, yamlOutputFile=yamlOutputFile, onsetDetection=onsetDetection)
 
             # features.append(fileFeatures)
             # ffts.append(fileFFTs)
