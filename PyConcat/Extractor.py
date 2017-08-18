@@ -8,6 +8,8 @@ import glob
 import fnmatch
 import os
 import madmom
+from multiprocessing import Process, Queue
+from multiprocessing import Pool
 
 enableDebug = False
 
@@ -154,13 +156,19 @@ class Extractor:
         :return: audio signal
         """
 
+
         audio = None
 
         if filename:
-            loader = essentia.standard.MonoLoader(filename=filename)
+            # loader = essentia.standard.MonoLoader(filename=filename)
+            #
+            # # and then we actually perform the loading:
+            # audio = loader()
 
-            # and then we actually perform the loading:
-            audio = loader()
+            #Essentia's loader (above)  has a bug that doesn't close files
+            #It causes problems processing large number of files, use madmom instead
+            audio, sample_rate = madmom.audio.signal.load_wave_file(filename, num_channels=1)
+            audio = essentia.array(audio)
 
         return audio
 
@@ -226,7 +234,7 @@ class Extractor:
 
         return ticks, slices, fileName
 
-    def extractOnsetsMadMom(self, filename):
+    def extractOnsetsMadmom(self, filename, method="CNN"):
         """Use an onset detector to return beat locations
 
         :param fileName: the file to load and extract beats from
@@ -239,40 +247,29 @@ class Extractor:
             fileName: pass out the filename again
 
         """
+        act = None
 
-        slices = None
-        onsetTimes = None
-
-        onsetRate = essentia.standard.OnsetRate()
-        duration = essentia.standard.Duration()
-
-        if filename:
-            audio = self.loadAudio(filename)
-
+        #Choose an onset detection function
+        if "CNN" in method:
             act = madmom.features.onsets.CNNOnsetProcessor()
-            onsetFunction = act(filename)
+        else:
+            act = madmom.features.onsets.SpectralOnsetProcessor(onset_method='superflux', fps=200,
+                                                                 filterbank = madmom.audio.filters.LogarithmicFilterbank,
+                                                                 num_bands = 24, log = np.log10)
+        #get the onsets
+        onsetFunction = act(filename)
 
-            proc = madmom.features.onsets.OnsetPeakPickingProcessor(fps=100)
-            onsetTimes = proc(onsetFunction)
+        proc = madmom.features.onsets.OnsetPeakPickingProcessor(fps=100)
+        onsetTimes = proc(onsetFunction)
 
-            endTimes = onsetTimes[1:]
-            d = duration(audio)
-            endTimes = np.append(endTimes , d)
-            endTimes = essentia.array(endTimes)
+        return onsetTimes
 
-            # slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
-            # slices = slicer(audio)
-
-            slices = self.slice(onsetTimes, audio)
-
-        return onsetTimes, slices, filename
-
-    def extractOnsets(self,fileName):
+    def extractOnsetsEssentia(self,filename):
         """Use an onset detector to return beat locations
 
         :param fileName: the file to load and extract beats from
 
-        :return: 
+        :return:
             onsetTimes: the onset times in the file
 
             slices: the segmented audio units
@@ -280,25 +277,52 @@ class Extractor:
             fileName: pass out the filename again
 
         """
-
         slices = None
         onsetTimes = None
 
         onsetRate = essentia.standard.OnsetRate()
         duration = essentia.standard.Duration()
 
-        if fileName:
-            audio = self.loadAudio(fileName)
-            onsetRateResult = onsetRate(audio)
+        audio = self.loadAudio(filename)
+        onsetRateResult = onsetRate(audio)
 
-            onsetTimes, onsetRate  = onsetRateResult
+        onsetTimes, onsetRate  = onsetRateResult
+
+        return onsetTimes
+
+    def extractAndSliceOnsets(self, filename, method="Essentia"):
+        """Use an onset detector to return beat locations
+
+        :param fileName: the file to load and extract beats from
+
+        :return:
+            onsetTimes: the onset times in the file
+
+            slices: the segmented audio units
+
+            fileName: pass out the filename again
+
+        """
+        if filename:
+            slices = None
+
+            audio = self.loadAudio(filename)
+
+            onsetTimes = None
+
+            if "Madmom" in method:
+                onsetTimes = self.extractOnsetsMadmom(filename, method=method)
+            else:
+                onsetTimes = self.extractOnsetsEssentia(filename)
+
+
             endTimes = onsetTimes[1:]
+
+            duration = essentia.standard.Duration()
             d = duration(audio)
+
             endTimes = np.append(endTimes , d)
             endTimes = essentia.array(endTimes)
-
-            # slicer = essentia.standard.Slicer(startTimes=onsetTimes, endTimes=endTimes)
-            # slices = slicer(audio)
 
             slices = self.slice(onsetTimes, audio)
 
@@ -359,7 +383,6 @@ class Extractor:
         if 'Loudness' in listOfFeatures:
             loudness = essentia.standard.Loudness()
         if 'Pitch' in listOfFeatures:
-            loudness = essentia.standard.Loudness()
             pitchYinFFT = essentia.standard.PitchYinFFT()
 
 
@@ -519,10 +542,7 @@ class Extractor:
         if scale == "beats":
             onsetTimes, onsets, fileName = self.extractBeats(file)
         elif scale == "onsets":
-            if onsetDetection == "MadMomCNN":
-                onsetTimes, onsets, filename = self.extractOnsetsMadMom(file)
-            else:
-                onsetTimes, onsets, fileName = self.extractOnsets(file)
+            onsetTimes, onsets, fileName = self.extractAndSliceOnsets(file, method=onsetDetection)
         else:
             onsetTimes.append(0.0)
             audio = self.loadAudio(file)
@@ -600,4 +620,3 @@ class Extractor:
             unitTimes = np.append(unitTimes, fileUnitTimes)
 
         return features, units, unitTimes
-
