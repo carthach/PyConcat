@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-from simple_paths_with_costs import * #Our custom simple_paths
+from . simple_paths_with_costs import * #Our custom simple_paths
 import heapq
 import itertools
 
@@ -295,6 +295,6 @@ def kViterbiGraphWithCosts(a, b, topK, weights=(1.0, 1.0)):
 
     t1 = time()
 
-    print 'function ITSELF takes %f' % (t1 - t0)
+    print('function ITSELF takes %f' % (t1 - t0))
 
     return paths

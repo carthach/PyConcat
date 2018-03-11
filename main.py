@@ -92,7 +92,7 @@ def parser(lgd=False, threshold=1.1):
     args = p.parse_args()
     # print arguments
     if args.verbose:
-        print args
+        print(args)
     # return args
 
     #Override the command line arguments with YAML
@@ -126,13 +126,16 @@ def main(args):
     targetFilename, corpusPath = getCorpus(args.input)
 
     #Get list of corpus files
-    corpusFilenames = extractor.getListOfWavFiles(corpusPath)
+    corpusFilenames = extractor.getListOfFiles(corpusPath, "*.mp3")
+
+    print(corpusPath)
 
     #Segment and extract features
     print("Extracting Target")
     targetFeatures, targetUnits, targetUnitTimes = extractor.analyseFile(targetFilename, writeOnsets, scale=timeScale)
     print("Extracting Corpus")
     corpusFeatures, corpusUnits, corpusUnitTimes = extractor.analyseFiles(corpusFilenames, writeOnsets, scale=timeScale, yamlOutputFolder=outputPath)
+
 
     # # For graphing
     # costMatrix = computeDistanceMatrix(targetFeatures, targetFeatures)
@@ -171,7 +174,7 @@ def main(args):
     #Optionally plot data
     #plotData(sequence, targetFeatures, corpusFeatures)
 
-    print "done"
+    print("done")
 
 def readYAMLConfig(filename, args):
     """

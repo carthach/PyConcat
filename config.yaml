@@ -1,5 +1,5 @@
 timeScale : 'onsets'
 writeOnsets : False
-unitSelection : 'linearSearch'
+unitSelection : 'kdTree'
 normalisation : 'MinMax'
 stretchUnits : True

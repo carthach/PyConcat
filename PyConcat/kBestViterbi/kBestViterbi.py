@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import networkx as nx
-import networkx_viterbi as nxv
+from . import networkx_viterbi as nxv
 import heapq
 import itertools
 
@@ -34,7 +34,7 @@ def exhaustiveWithCosts(a, b):
 
         scores.append((score, ss))
 
-        print ss
+        print(ss)
 
     return sorted(scores)
 

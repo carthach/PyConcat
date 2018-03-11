@@ -1,7 +1,7 @@
 import numpy as np
-import HMM
-import kBestViterbi.kBestViterbi as kb
-import kBestViterbi.networkx_viterbi as kbg
+from .HMM import HMM
+from .kBestViterbi import kBestViterbi as kb
+from .kBestViterbi import networkx_viterbi as kbg
 from scipy.spatial import distance
 from sklearn import preprocessing
 from time import time
@@ -189,7 +189,7 @@ def computeDistanceWithWeights(targetFeatures, corpusFeatures):
 
     return a, b
 
-def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="MinMax", topK=30):
+def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="MinMax", topK=10):
     """Optionally normalise and use one of the methods to return a sequence of indices
     
     :param targetFeatures:
@@ -204,7 +204,7 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
     
     :return: the sequence path(s)
     """
-    print "    Scaling and weighting feature vectors..."
+    print("    Scaling and weighting feature vectors...")
 
     scalar = None
 
@@ -229,12 +229,12 @@ def unitSelection(targetFeatures, corpusFeatures, method="kdtree", normalise="Mi
         corpusFeatures = combinedFeatures[len(targetFeatures):, :]
 
     #Call this method to compute the weighted a/b matrices for HMM
-    print "    Computing distance matrices..."
+    print("    Computing distance matrices...")
     a, b = computeDistanceWithWeights(targetFeatures, corpusFeatures)
 
-    print "    Performing unit selection..."
+    print("    Performing unit selection...")
     targetCostWeight = 1.0
-    concatCostWeight = 1.0
+    concatCostWeight = 0.0
 
     #Return the results of the chosen unit selection
     if method == "kdTree":

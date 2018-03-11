@@ -8,6 +8,8 @@ import glob
 import fnmatch
 import os
 import madmom
+import librosa
+from madmom.audio.filters import LogarithmicFilterbank
 from multiprocessing import Process, Queue
 from multiprocessing import Pool
 
@@ -167,8 +169,11 @@ class Extractor:
 
             #Essentia's loader (above)  has a bug that doesn't close files
             #It causes problems processing large number of files, use madmom instead
-            audio, sample_rate = madmom.audio.signal.load_wave_file(filename, num_channels=1)
-            audio = essentia.array(audio)
+            # audio, sample_rate = madmom.audio.signal.load_wave_file(filename, num_channels=1)
+        
+            y, sr = librosa.load(filename, sr=None)
+
+            audio = essentia.array(y)
 
         return audio
 
@@ -182,6 +187,7 @@ class Extractor:
         """
         files = []
 
+        #For the recursive functionality we need a list of paths
         if type(path) is not list:
             path = [path]
 
@@ -235,7 +241,7 @@ class Extractor:
         return ticks, slices, fileName
 
     def extractOnsetsMadmom(self, filename, method="CNN"):
-        """Use an onset detector to return beat locations
+        """Use Madmom's Superflux or CNN detector to return onset locations
 
         :param fileName: the file to load and extract beats from
 
@@ -247,25 +253,49 @@ class Extractor:
             fileName: pass out the filename again
 
         """
-        act = None
+        onsetFunctionExtractor = None
+        peakPicker = None
 
         #Choose an onset detection function
         if "CNN" in method:
-            act = madmom.features.onsets.CNNOnsetProcessor()
+            onsetFunctionExtractor = madmom.features.onsets.CNNOnsetProcessor(fps=100)
+            peakPicker = madmom.features.onsets.OnsetPeakPickingProcessor(threshold=0.54, smooth=0.05)
         else:
-            act = madmom.features.onsets.SpectralOnsetProcessor(onset_method='superflux', fps=200,
-                                                                 filterbank = madmom.audio.filters.LogarithmicFilterbank,
-                                                                 num_bands = 24, log = np.log10)
-        #get the onsets
-        onsetFunction = act(filename)
+            # onsetFunctionExtractor = madmom.features.onsets.SpectralOnsetProcessor(onset_method='superflux',
+            #                                                     filterbank = LogarithmicFilterbank,
+            #                                                     num_bands = 24, log = np.log10,
+            #                                                     fmin=30, fmax=17000,
+            #                                                     mul=1, add=1,
+            #                                                     diff_ratio=0.5,
+            #                                                     diff_max_bins=3,
+            #                                                     positive_diffs=True
+            #                                                     )
+            # peakPicker = madmom.features.onsets.OnsetPeakPickingProcessor(threshold=1.1, pre_max=0.01,
+            #                                                               post_max=0.05, pre_avg=0.15,
+            #                                                               post_avg=0, combine=0.03, delay=0)
 
-        proc = madmom.features.onsets.OnsetPeakPickingProcessor(fps=100)
-        onsetTimes = proc(onsetFunction)
+            onsetFunctionExtractor = madmom.features.onsets.SpectralOnsetProcessor(onset_method='superflux',
+                                                                                   filterbank=LogarithmicFilterbank,
+                                                                                   num_bands=24, log=np.log10,
+                                                                                   fmin=27.5, fmax=16000,
+                                                                                   mul=1, add=1,
+                                                                                   diff_ratio=0.5,
+                                                                                   diff_max_bins=3,
+                                                                                   positive_diffs=True
+                                                                                   )
+            #Old SupeFlux Params
+            peakPicker = madmom.features.onsets.OnsetPeakPickingProcessor(threshold=1.25, pre_max=0.03,
+                                                                          post_max=0.03, pre_avg=0.10,
+                                                                          post_avg=0.07, combine=0.03, delay=0)
+
+        #get the onsets
+        onsetFunction = onsetFunctionExtractor(filename)
+        onsetTimes = peakPicker(onsetFunction)
 
         return onsetTimes
 
     def extractOnsetsEssentia(self,filename):
-        """Use an onset detector to return beat locations
+        """Use Essentia's Onset Rate onset detector to return beat locations
 
         :param fileName: the file to load and extract beats from
 
@@ -281,12 +311,9 @@ class Extractor:
         onsetTimes = None
 
         onsetRate = essentia.standard.OnsetRate()
-        duration = essentia.standard.Duration()
 
         audio = self.loadAudio(filename)
-        onsetRateResult = onsetRate(audio)
-
-        onsetTimes, onsetRate  = onsetRateResult
+        onsetTimes, onsetRate = onsetRate(audio)
 
         return onsetTimes
 
