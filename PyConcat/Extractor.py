@@ -24,7 +24,7 @@ class Extractor:
 
     def __init__(self, frameSize=2048, hopSize=frameSize/2, sampleRate=44100.0):
         self.frameSize = frameSize
-        self.hopSize = hopSize
+        self.hopSize = int(hopSize)
         self.sampleRate = 44100.0
 
         self.debugFile = open("processed_files.csv", 'w')
@@ -401,7 +401,7 @@ class Extractor:
         medianPool = essentia.Pool()
 
         centroid = flatness = loudness = pitchYinFFT = None
-        bfcc = mfcc = spectralPeaks = hpcp = None
+        mfcc = bfcc = gfcc = spectralPeaks = hpcp = None
 
         if 'Centroid' in listOfFeatures:
             centroid = essentia.standard.Centroid(range=self.sampleRate / 2)
@@ -413,10 +413,12 @@ class Extractor:
             pitchYinFFT = essentia.standard.PitchYinFFT()
 
 
-        if 'BFCC' in listOfFeatures:
-            bfcc = essentia.standard.BFCC(inputSize = self.frameSize/2+1)
         if 'MFCC' in listOfFeatures:
-            mfcc = essentia.standard.MFCC(inputSize = self.frameSize/2+1)
+            mfcc = essentia.standard.MFCC(inputSize=int(self.frameSize/2+1))
+        if 'BFCC' in listOfFeatures:
+            bfcc = essentia.standard.BFCC(inputSize=int(self.frameSize/2+1))
+        if 'GFCC' in listOfFeatures:
+            gfcc = essentia.standard.GFCC(inputSize=int(self.frameSize/2+1))
         if 'HPCP' in listOfFeatures:
             spectralPeaks = essentia.standard.SpectralPeaks(orderBy="magnitude",
                                                             magnitudeThreshold=1e-05,
@@ -463,12 +465,15 @@ class Extractor:
 
             startTime = time.time()
 
-            if bfcc is not None:
-                bfcc_bands, bfccVector = bfcc(mag)
-                pool.add("BFCC", bfccVector[1:])
             if mfcc is not None:
                 mfcc_bands, mfccVector = mfcc(mag)
                 pool.add("MFCC", mfccVector[1:])
+            if bfcc is not None:
+                bfcc_bands, bfccVector = bfcc(mag)
+                pool.add("BFCC", bfccVector[1:])
+            if gfcc is not None:
+                gfcc_bands, gfccVector = gfcc(mag)
+                pool.add("GFCC", gfccVector[1:])
             if hpcp is not None:
                 frequencies, magnitudes = spectralPeaks(mag)
                 hpcpVector = hpcp(frequencies, magnitudes)
@@ -534,7 +539,7 @@ class Extractor:
         #Return features, and if it's spectral return the frames as units
         return features, units, pool
 
-    def analyseFile(self,file, writeOnsets, scale = "onsets", yamlOutputFile="", onsetDetection="", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'BFCC']):
+    def analyseFile(self,file, writeOnsets, scale = "onsets", yamlOutputFile="", onsetDetection="", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'MFCC']):
         """Extract onsets from a single file then extract features from all those onsets
         
         :param file: the file to analyse
@@ -605,7 +610,7 @@ class Extractor:
 
         return features, units, onsetTimes
 
-    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets", yamlOutputFolder="", onsetDetection="", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'BFCC']):
+    def analyseFiles(self,listOfFiles, writeOnsets=False, scale = "onsets", yamlOutputFolder="", onsetDetection="", listOfFeatures=['Loudness', 'Centroid', 'Flatness', 'MFCC']):
         """Perform segmentation and feature analysis on a list of files
         
         :param listOfFiles: list of filenames 

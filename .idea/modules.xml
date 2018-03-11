@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/PyConcat.iml" filepath="$PROJECT_DIR$/.idea/PyConcat.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/unit_selection.iml" filepath="$PROJECT_DIR$/.idea/unit_selection.iml" />
     </modules>
   </component>
 </project>
